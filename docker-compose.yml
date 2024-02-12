@@ -3,8 +3,11 @@ services:
   jupyter:
     build: .
     volumes:
-      - .:/home/jovyan/work
+      - ./database:/home/jovyan/work/database
+      - ./notebooks:/home/jovyan/work/notebooks
+      - ./output:/home/jovyan/work/output
+      - ./utils:/home/jovyan/work/utils
     ports:
       - 8888:8888
-    container_name: algorithms4pepprotgraphs
-    command: "start-notebook.sh --NotebookApp.token="
+    container_name: algorithms4PepProtGraphs
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/Algorithms4PepProtGraphs"
