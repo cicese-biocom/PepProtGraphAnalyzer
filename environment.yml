@@ -1,0 +1,12 @@
+name: base
+
+channels:
+  - default
+
+dependencies:
+  - pandas
+  - biopython
+  - tqdm
+  - matplotlib
+  - hvplot
+  - panel
