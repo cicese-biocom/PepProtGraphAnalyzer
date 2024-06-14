@@ -1,13 +1,55 @@
-version: '3'
 services:
-  jupyter:
+   algorithms4pepprotgraphs-env:
     build: .
+    command: nvidia-smi
+    container_name: algorithms4pepprotgraphs-env
+    links:
+      - mongodb
     volumes:
-      - ./database:/home/jovyan/work/database
+      - .:/opt/project
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+   mongodb:
+    image: mongo
+    restart: always
+    container_name: mongodb
+    hostname: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: secret
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+   jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile-jupyter
+    volumes:
+      - ./datasets:/home/jovyan/work/datasets
       - ./notebooks:/home/jovyan/work/notebooks
       - ./output:/home/jovyan/work/output
       - ./utils:/home/jovyan/work/utils
+      - ./graph:/home/jovyan/work/graph
+      - ./models:/home/jovyan/work/models
     ports:
       - 8888:8888
-    container_name: algorithms4PepProtGraphs
-    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/Algorithms4PepProtGraphs"
+    container_name: jupyter
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/jupyter"
+    depends_on:
+      - algorithms4pepprotgraphs-env
+      - mongodb
+
+volumes:
+  mongo-data:
+  datasets:
+  notebooks:
+  output:
+  utils:
+  graph:
+  models:

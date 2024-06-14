@@ -1,0 +1,56 @@
+{
+  "output_settings": [
+    {
+      "key": "log_path",
+      "name": "Logs",
+      "files": [
+        {
+          "key": "log_file",
+          "name": "Run.log"
+        },
+        {
+          "key": "sequences_with_non_natural_amino_acids_file",
+          "name": "Sequences_with_non_natural_amino_acids.csv"
+        },
+        {
+          "key": "duplicated_sequence_ids_file",
+          "name": "Duplicated_sequence_IDs.csv"
+        },
+        {
+          "key": "duplicated_sequences_file",
+          "name": "Duplicated_sequences.csv"
+        },
+        {
+          "key": "sequences_with_erroneous_activity_file",
+          "name": "Sequences_with_erroneous_activity.csv"
+        },
+        {
+          "key": "sequences_with_baseless_partitions_file",
+          "name": "Sequences_with_baseless_partitions.csv"
+        },
+        {
+          "key": "non_pdb_bound_sequences_file",
+          "name": "Non-pdb_bound_sequences.csv"
+        }
+      ]
+    },
+    {
+      "key": "analysis_path",
+      "name": "Graph_Analysis",
+      "files": [
+        {
+          "key": "inter_amino_acid_distances",
+          "name": "Inter_Amino_Acid_Distances"
+        },
+        {
+          "key": "graph_information",
+          "name": "Graph-information.csv"
+        },
+        {
+          "key": "graph_similarity",
+          "name": "Graph-similarity.csv"
+        }
+      ]
+    }
+  ]
+}
