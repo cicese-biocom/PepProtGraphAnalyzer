@@ -33,8 +33,8 @@
           "name": "Non-pdb_bound_sequences.csv"
         },
         {
-          "key": "distance_thresholds_generating_empty_graphs",
-          "name": "Distance_thresholds_generating_empty_graphs.csv"
+          "key": "non_analyzed_graph",
+          "name": "Non_analyzed_graph.csv"
         }
       ]
     },
