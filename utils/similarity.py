@@ -13,7 +13,7 @@ def cosine_similarity(vectors_1, vectors_2):
         min_similarity = np.min(similarities)
         max_similarity = np.max(similarities)
 
-        return avg_similarity, min_similarity, max_similarity
+        return similarities, avg_similarity, min_similarity, max_similarity
 
     except Exception as e:
         raise ValueError(str(e))

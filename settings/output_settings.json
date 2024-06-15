@@ -53,7 +53,12 @@
         {
           "key": "graph_similarity",
           "name": "Graph-similarity.csv"
+        },
+        {
+          "key": "graph_similarity_summary",
+          "name": "Graph-similarity-summary.csv"
         }
+
       ]
     }
   ]

@@ -90,9 +90,9 @@ def plot_merge_similarity_matrix(similarity_matrix, x_axis_label, y_axis_label, 
                    aes(x='distance_interval_1', y='distance_interval_2', fill='average_similarity'))
             + geom_tile()
             + scale_fill_gradient2(
-                low="#cf885f",
-                mid="#9ac7e1",
-                high="#3481ad",
+                low="#faab00",
+                mid="#e7ecef",
+                high="#0a2130",
                 midpoint=0,
                 aesthetics="fill",
                 na_value="#08bed3",

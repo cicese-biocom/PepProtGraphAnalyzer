@@ -21,7 +21,7 @@ from utils.path_creator import PathCreatorContext
 from utils.similarity import eigenvalues, cosine_similarity
 
 
-class GraphAnalysisModule:   
+class GraphAnalysisModule:
     def execute(self, context: ApplicationContext, parameters: Dict) -> None:
         # Step 1: Create output path
         output_path = parameters.get('output_path')
@@ -54,13 +54,13 @@ class GraphAnalysisModule:
         amino_acid_representation = parameters.get('amino_acid_representation')
         predict_tertiary_structure = parameters.get('predict_tertiary_structure')
         args = (data, graph_database, output_setting, predict_tertiary_structure, tertiary_structure_method,
-                amino_acid_representation, pdb_path, batch_size, distance_intervals)              
+                amino_acid_representation, pdb_path, batch_size, distance_intervals)
         construct_distance_based_graph(args)
 
         # Step 9: Inter amino acid distances
         args = (data, graph_database, output_setting, tertiary_structure_method, distance_intervals)
         self.inter_amino_acid_distances(args)
-        
+
         # Step 10: Get graphs based distance threshold
         args = (data, graph_database, tertiary_structure_method, distance_intervals, output_setting)
         graph_information = self.get_graphs_information(args)
@@ -105,11 +105,11 @@ class GraphAnalysisModule:
         try:
             data, graph_database, output_setting, tertiary_structure_method, distance_intervals = args
             distance_functions = list({interval['distance_function'] for interval in distance_intervals})
-            
+
             sequences = list(data['sequence'])
             batch_size = 100
             csv_path = output_setting['inter_amino_acid_distances']
-    
+
             with tqdm(range(len(sequences)), total=len(sequences),
                       desc="Generating inter-amino acid distances") as progress:
                 for sequences_batch in batch(sequences, batch_size):
@@ -130,7 +130,7 @@ class GraphAnalysisModule:
     def get_graphs_information(args):
         try:
             data, graph_database, tertiary_structure_method, distance_intervals, output_setting = args
-            
+
             sequences = list(data['sequence'])
             batch_size = 100
 
@@ -185,7 +185,7 @@ class GraphAnalysisModule:
     def drop_empty_graph(args):
         graph_information, output_setting = args
 
-        csv_file = output_setting['distance_thresholds_generating_empty_graphs']
+        csv_file = output_setting['non_analyzed_graph']
         sequence_df = graph_information.copy()
         sequences_to_exclude = sequence_df[sequence_df['number_of_edges'] == 0]
 
@@ -225,8 +225,10 @@ class GraphAnalysisModule:
                     similarity_results = [future.result() for future in futures]
 
             rows = []
+            similarities_df = pd.DataFrame()
             for (distance_interval_name_1, distance_interval_name_2), (
-                    avg_similarity, min_similarity, max_similarity) in zip(distance_interval_str, similarity_results):
+                    similarities, avg_similarity, min_similarity, max_similarity) in zip(distance_interval_str,
+                                                                                         similarity_results):
                 rows.append({
                     'distance_interval_1': distance_interval_name_1,
                     'distance_interval_2': distance_interval_name_2,
@@ -235,7 +237,11 @@ class GraphAnalysisModule:
                     'maximum_similarity': max_similarity
                 })
 
-            csv_path = output_setting['graph_similarity']
+                column_name = f'{distance_interval_name_1}_{distance_interval_name_2}'
+                new_column_df = pd.DataFrame({column_name: similarities})
+                similarities_df = pd.concat([similarities_df, new_column_df], axis=1)
+
+            csv_path = output_setting['graph_similarity_summary']
             filename = f"{csv_path}"
             graph_similarity = pd.DataFrame(rows, columns=['distance_interval_1',
                                                            'distance_interval_2',
@@ -243,6 +249,11 @@ class GraphAnalysisModule:
                                                            'minimum_similarity',
                                                            'maximum_similarity'])
             graph_similarity.to_csv(filename, index=False)
+
+            csv_path = output_setting['graph_similarity']
+            filename = f"{csv_path}"
+            similarities_df.to_csv(filename, index=False)
+
             return graph_similarity
 
         except Exception as e:
@@ -252,8 +263,8 @@ class GraphAnalysisModule:
 def compute_similarity(args):
     eigenvalues1, eigenvalues2 = args
     try:
-        avg_similarity, min_similarity, max_similarity = cosine_similarity(eigenvalues1, eigenvalues2)
-        return avg_similarity, min_similarity, max_similarity
+        similarities, avg_similarity, min_similarity, max_similarity = cosine_similarity(eigenvalues1, eigenvalues2)
+        return similarities, avg_similarity, min_similarity, max_similarity
     except ValueError as e:
         print("Error:", e)
         return np.nan, np.nan, np.nan
@@ -265,7 +276,7 @@ def get_eigenvalues_and_interval_str(graph_information, interval):
 
     filtered = graph_information[(graph_information['distance_function'] == distance_function) & (
             graph_information['min_interval'] == distance_interval[0]) & (
-                                           graph_information['max_interval'] == distance_interval[1])]
+                                         graph_information['max_interval'] == distance_interval[1])]
 
     eigenvalues = filtered.sort_values(by='number_of_nodes', ascending=False, ignore_index=True)['eigenvalues']
     eigenvalues = eigenvalues.apply(convert_to_numpy)
@@ -276,7 +287,4 @@ def get_eigenvalues_and_interval_str(graph_information, interval):
 
 
 def convert_to_numpy(eigenvalue_str):
-    # eigenvalue_str = eigenvalue_str.strip("[]")
-    # eigenvalue_str = eigenvalue_str.replace("'", "").split(', ')
     return np.array([float(val) for val in eigenvalue_str])
-

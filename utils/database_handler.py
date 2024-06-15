@@ -247,8 +247,6 @@ if __name__ == "__main__":
     distance_threshold = 15
     sequence = 'GLFDIIKNIFSGL'
 
-    graph_database.delete_graphs()
-
     graphs = graph_database.get_distance_based_graphs(sequence, tertiary_structure_method, distance_function,
                                                       distance_threshold)
 
