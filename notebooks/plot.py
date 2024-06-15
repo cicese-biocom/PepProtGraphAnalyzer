@@ -63,8 +63,8 @@ def create_merge_similarity_matrix(graph_similarity_1, graph_similarity_2, inter
         average_similarity_1 = row['average_similarity_1']
         average_similarity_2 = row['average_similarity_2']
 
-        similarity_matrix.loc[interval1, interval2] = average_similarity_1
-        similarity_matrix.loc[interval2, interval1] = average_similarity_2
+        similarity_matrix.loc[interval1, interval2] = average_similarity_2
+        similarity_matrix.loc[interval2, interval1] = average_similarity_1
 
         similarity_matrix_1.loc[interval1, interval2] = average_similarity_1
         similarity_matrix_1.loc[interval2, interval1] = average_similarity_1
