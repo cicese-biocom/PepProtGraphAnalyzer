@@ -18,7 +18,7 @@ if __name__ == '__main__':
     args_handler = ArgsParserHandler()
     args = args_handler.get_graph_analyzer_arguments()
 
-    # """""
+    """""
     args['dataset'] = Path('example/ExampleDataset.csv')
     args['pdb_path'] = Path('example/ESMFold_pdbs/')
     args['tertiary_structure_method'] = 'esmfold'
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     args['output_path'] = Path('output/example/')
     args['batch_size'] = 56
     args['distance_intervals_json_path'] = Path('datasets/json/distance_intervals.json')
-    # """""
+    """""
 
     start_time = time.time()
     graph_analyzer(args)

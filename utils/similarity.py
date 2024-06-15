@@ -30,8 +30,6 @@ def _cosine_similarity(vector_a, vector_b):
         return np.divide(np.sum(np.multiply(vector_a, vector_b)),
                          np.sqrt(np.dot(np.sum(np.power(vector_a, 2)), np.sum(np.power(vector_b, 2)))))
 
-
-
     except Exception as e:
         raise ValueError(str(e))
 

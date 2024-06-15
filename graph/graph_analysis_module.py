@@ -1,4 +1,5 @@
 import itertools
+import logging
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
@@ -64,7 +65,11 @@ class GraphAnalysisModule:
         args = (data, graph_database, tertiary_structure_method, distance_intervals, output_setting)
         graph_information = self.get_graphs_information(args)
 
-        # Step 11: Get graphs similarity
+        # Step 12: Drop empty graph
+        args = (graph_information, output_setting)
+        graph_information = self.drop_empty_graph(args)
+
+        # Step 12: Get graphs similarity
         args = (graph_information, distance_intervals, output_setting)
         self.get_graphs_similarity(args)
 
@@ -177,6 +182,21 @@ class GraphAnalysisModule:
             raise
 
     @staticmethod
+    def drop_empty_graph(args):
+        graph_information, output_setting = args
+
+        csv_file = output_setting['distance_thresholds_generating_empty_graphs']
+        sequence_df = graph_information.copy()
+        sequences_to_exclude = sequence_df[sequence_df['number_of_edges'] == 0]
+
+        if not sequences_to_exclude.empty:
+            sequences_to_exclude.to_csv(csv_file, index=False)
+            sequence_df = sequence_df.drop(sequences_to_exclude.index)
+            logging.getLogger('workflow_logger'). \
+                warning(f"Sequences with erroneous_activity. See: {csv_file}")
+        return sequence_df
+
+    @staticmethod
     def get_graphs_similarity(args):
         try:
             graph_information, distance_intervals, output_setting = args
@@ -259,3 +279,4 @@ def convert_to_numpy(eigenvalue_str):
     # eigenvalue_str = eigenvalue_str.strip("[]")
     # eigenvalue_str = eigenvalue_str.replace("'", "").split(', ')
     return np.array([float(val) for val in eigenvalue_str])
+
