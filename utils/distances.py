@@ -36,30 +36,31 @@ def distance(point1, point2, distance_function):
 
 
 def _euclidean(point1, point2):
-    return np.round(np.sqrt(np.sum(np.power(np.subtract(point1, point2), 2))), 8)
+    return np.sqrt(np.sum(np.power(np.subtract(point1, point2), 2)))
+
 
 def _canberra(point1, point2):
-    return np.round(np.sum(np.divide(np.abs(point1 - point2), np.add(np.abs(point1), np.abs(point2)))), 8)
+    return np.sum(np.divide(np.abs(point1 - point2), np.add(np.abs(point1), np.abs(point2))))
 
 
 def _lance_william(point1, point2):
-    return np.round(np.divide(np.sum(np.abs(np.subtract(point1, point2))), np.sum(np.add(np.abs(point1), np.abs(point2)))),8)
+    return np.divide(np.sum(np.abs(np.subtract(point1, point2))), np.sum(np.add(np.abs(point1), np.abs(point2))))
 
 
 def _clark(point1, point2):
-    return np.round(np.sqrt(np.sum(np.power(np.divide(np.subtract(point1, point2), np.add(np.abs(point1), np.abs(point2))), 2))),8)
+    return np.sqrt(np.sum(np.power(np.divide(np.subtract(point1, point2), np.add(np.abs(point1), np.abs(point2))), 2)))
 
 
 def _soergel(point1, point2):
-    return np.round(np.divide(np.sum(np.abs(np.subtract(point1, point2))), np.sum(np.maximum(point1, point2))),8)
+    return np.divide(np.sum(np.abs(np.subtract(point1, point2))), np.sum(np.maximum(point1, point2)))
 
 
 def _bhattacharyya(point1, point2):
-    return np.round(np.sqrt(np.sum(np.power(np.subtract(np.sqrt(point1), np.sqrt(point2)), 2))),8)
+    return np.sqrt(np.sum(np.power(np.subtract(np.sqrt(point1), np.sqrt(point2)), 2)))
 
 
 def _angular_separation(point1, point2):
-    return np.round(np.subtract(1, np.divide(np.sum(np.multiply(point1, point2)), np.sqrt(np.dot(np.sum(np.power(point1, 2)), np.sum(np.power(point2, 2)))))), 8)
+    return np.subtract(1, np.divide(np.sum(np.multiply(point1, point2)), np.sqrt(np.dot(np.sum(np.power(point1, 2)), np.sum(np.power(point2, 2))))))
 
 
 def translate_positive_coordinates(coordinates):
