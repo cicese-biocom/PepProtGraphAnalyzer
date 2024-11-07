@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import math
@@ -7,7 +7,9 @@ from plotnine import (
     ggplot, aes, geom_histogram, theme_minimal,
     scale_x_continuous, scale_y_continuous, theme,
     element_text, labs, scale_y_log10, after_stat,
-    guide_colorbar, geom_tile, scale_fill_gradient2
+    guide_colorbar, geom_tile, scale_fill_gradient2,
+    geom_boxplot, scale_fill_manual, scale_color_manual, 
+    geom_line
 )
 from plotnine.exceptions import PlotnineWarning
 import warnings
@@ -34,8 +36,10 @@ def plot_inter_amino_acid_distances(distance_filepath, distance_function, x_axis
             )
             + labs(
                 title="",
-                x=f'{process_distance_name(distance_function)} distance-based Threshold',
-                y="Frequency"
+                #x=f'{process_distance_name(distance_function)} distance-based Threshold',
+                x=f'Umbral de distancia basado en {process_distance_name(distance_function)}',
+                #y="Frequency"
+                y="Frecuencia"
               )
             + theme_minimal()
     )
@@ -112,6 +116,181 @@ def plot_merge_similarity_matrix(similarity_matrix, x_axis_label, y_axis_label, 
     create_path(output_filepath)
     plot.save(f'{output_filepath}Similarity Cosine.png', dpi=300)
     return plot
+
+
+def plot_density(input_filepath, output_filepath):
+    # Load the data
+    graph_info = pd.read_csv(input_filepath)
+    
+    # Get unique max_intervals for each distance_function
+    intervals = graph_info.groupby('distance_function')['max_interval'].unique()
+    
+    # Create a dictionary to map max_interval values to I1, I2, I3
+    interval_map = {}
+    for distance_function, unique_intervals in intervals.items():
+        # Sort intervals to ensure correct mapping
+        sorted_intervals = sorted(unique_intervals)
+        interval_map.update({(distance_function, sorted_intervals[0]): 'I1'})
+        interval_map.update({(distance_function, sorted_intervals[1]): 'I2'})
+        interval_map.update({(distance_function, sorted_intervals[2]): 'I3'})
+    
+    # Add the new 'interval' column based on the mapping
+    graph_info['interval'] = graph_info.apply(
+        lambda row: interval_map[(row['distance_function'], row['max_interval'])], axis=1)
+
+    distance_order = ['euclidean', 'angular_separation', 'bhattacharyya', 'canberra', 'clark', 'lance_williams', 'soergel']
+    graph_info['distance_function'] = pd.Categorical(graph_info['distance_function'], categories=distance_order, ordered=True)
+    
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+
+    # boxplot
+    plot = (
+            ggplot(graph_info, aes(x='distance_function', y='density', fill='factor(interval)')) 
+            + geom_boxplot()
+            + scale_fill_manual(values=colors)
+            + labs(
+                  title="",
+                  x=f'Función de distancia',
+                  y=f'Densidad',
+                  fill='Interval')  
+            + theme_minimal()
+            + theme(axis_text_x=element_text(angle=45, hjust=1)))
+    
+    create_path(output_filepath)
+    plot.save(output_filepath, dpi=300)
+    return plot, graph_info
+
+
+def plot_edges(input_filepath, output_filepath):
+    # Load the data
+    graph_info = pd.read_csv(input_filepath)
+    
+    # Get unique max_intervals for each distance_function
+    intervals = graph_info.groupby('distance_function')['max_interval'].unique()
+    
+    # Create a dictionary to map max_interval values to I1, I2, I3
+    interval_map = {}
+    for distance_function, unique_intervals in intervals.items():
+        # Sort intervals to ensure correct mapping
+        sorted_intervals = sorted(unique_intervals)
+        interval_map.update({(distance_function, sorted_intervals[0]): 'I1'})
+        interval_map.update({(distance_function, sorted_intervals[1]): 'I2'})
+        interval_map.update({(distance_function, sorted_intervals[2]): 'I3'})
+    
+    # Add the new 'interval' column based on the mapping
+    graph_info['interval'] = graph_info.apply(
+        lambda row: interval_map[(row['distance_function'], row['max_interval'])], axis=1)
+    
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+    
+    plot = (
+            ggplot(graph_info, aes(x='distance_function', y='number_of_edges', fill='factor(interval)')) 
+            + geom_boxplot()
+            + scale_fill_manual(values=colors)
+            + labs(
+                  title="",
+                  x=f'Función de distancia',
+                  y=f'Densidad',
+                  fill='Interval')  
+            + theme_minimal()
+            + theme(axis_text_x=element_text(angle=45, hjust=1)))
+    
+    create_path(output_filepath)
+    plot.save(output_filepath, dpi=300)
+    return plot, graph_info
+
+
+def plot_density_vs_number_of_nodes_per_distance_function(graph_info, output_filepath, distance_function):
+    filtered_data = graph_info[graph_info['distance_function'] == distance_function]    
+    
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+    
+    plot = (
+        ggplot(filtered_data, aes(x='number_of_nodes', y='density', color='interval', group='interval'))
+        + geom_line()
+        + scale_color_manual(values=colors)
+        + labs(
+            x='Sequence Length',
+            y='Density',
+            color='Interval'
+        )
+        + theme_minimal()
+        + theme(
+            axis_text_x=element_text(angle=45, hjust=1)
+        )
+    )
+    
+    create_path(output_filepath)
+    plot.save(output_filepath, dpi=300)
+    return plot
+
+
+def plot_desity_vs_number_of_nodes_per_distance_function(graph_info, output_filepath, distance_function):
+    filtered_data = graph_info[graph_info['distance_function'] == distance_function]    
+    
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+    
+    plot = (
+        ggplot(filtered_data, aes(x='number_of_nodes', y='density', color='interval', group='interval')) 
+        + geom_line()
+        + scale_color_manual(values=colors)
+        + labs(
+            x='Sequence Length',
+            y='Density',
+            color='Interval'
+        ) 
+        + theme_minimal()
+        + theme(
+            axis_text_x=element_text(angle=45, hjust=1)
+        )
+    )
+    
+    create_path(output_filepath)
+    plot.save(output_filepath, dpi=300)
+    return plot
+
+
+def plot_number_of_edges_vs_number_of_nodes_per_distance_function(graph_info, output_filepath, distance_function):
+    filtered_data = graph_info[graph_info['distance_function'] == distance_function]    
+    
+    colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]
+    
+    plot = (
+        ggplot(filtered_data, aes(x='number_of_nodes', y='number_of_edges', color='interval', group='interval')) 
+        + geom_line() 
+        + scale_color_manual(values=colors) 
+        + labs(
+            x='Sequence Length',
+            y='Number of Edges',
+            color='Interval'
+        ) 
+        + theme(
+            axis_text_x=element_text(angle=45, hjust=1)
+        )
+    )
+    
+    create_path(output_filepath)
+    plot.save(output_filepath, dpi=300)
+    return plot
+
+
+def statistics(base_path, distance_functions, output_filepath, percentiles):
+    all_data = []
+    for distance_function in tqdm(distance_functions, desc="Processing distance functions"):
+        distance_filepath = f'{base_path}Inter_Amino_Acid_Distances-{distance_function}.csv'
+        distance_info = pd.read_csv(distance_filepath, header=None, names=['inter_amino_acid_distances'])
+    
+        distance_info['distance_function'] = distance_function
+        all_data.append(distance_info)
+    
+    all_data = pd.concat(all_data, ignore_index=True)
+    stats_by_function = all_data.groupby('distance_function', observed=True)['inter_amino_acid_distances'].describe(percentiles=percentiles)
+    
+    stats_by_function = stats_by_function.reset_index()
+    stats_by_function.to_csv(output_filepath, index=False)
+    
+    return stats_by_function
+
 
 
 def _format_labels(x, max_number_of_sequences):
