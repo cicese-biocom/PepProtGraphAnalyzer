@@ -66,42 +66,36 @@ class GraphAnalysisModule:
         graph_information = self.get_graphs_information(args)
 
         # Step 12: Drop empty graph
-        args = (graph_information, output_setting)
-        graph_information = self.drop_empty_graph(args)
+       # args = (graph_information, output_setting)
+       # graph_information = self.drop_empty_graph(args)
 
         # Step 12: Get graphs similarity
         args = (graph_information, distance_intervals, output_setting)
         self.get_graphs_similarity(args)
 
-    @staticmethod
-    def create_path(path_creator_context: PathCreatorContext, output_path):
+    def create_path(self, path_creator_context: PathCreatorContext, output_path):
         return path_creator_context.create_path(output_path)
 
-    @staticmethod
-    def initialize_logger(log_output_path: Path):
+    def initialize_logger(self, log_output_path: Path):
         LoggingHandler.initialize_logger(logger_settings_path=Path('settings').joinpath('logger_setting.json'),
                                          log_output_path=log_output_path)
 
-    @staticmethod
-    def load_data(dataset: Path, output_setting: Dict, data_loader: DataLoaderContext,
+    def load_data(self, dataset: Path, output_setting: Dict, data_loader: DataLoaderContext,
                   dataset_validator: DatasetValidatorContext) -> pd.DataFrame:
         data = data_loader.read_file(filepath=dataset)
         data = dataset_validator.processing_dataset(dataset=data,
                                                     output_setting=output_setting)
         return data
 
-    @staticmethod
-    def filter_data_by_sequence_length(data, minimum_sequence_length, maximum_sequence_length):
+    def filter_data_by_sequence_length(self, data, minimum_sequence_length, maximum_sequence_length):
         data = data[(data['length'] >= minimum_sequence_length) & (data['length'] <= maximum_sequence_length)]
         return data
 
-    @staticmethod
-    def initialize_database():
+    def initialize_database(self):
         graph_database = PepProtGraphDatabase('settings/database_setting.json')
         return graph_database
 
-    @staticmethod
-    def inter_amino_acid_distances(args):
+    def inter_amino_acid_distances(self, args):
         try:
             data, graph_database, output_setting, tertiary_structure_method, distance_intervals = args
             distance_functions = list({interval['distance_function'] for interval in distance_intervals})
@@ -126,8 +120,7 @@ class GraphAnalysisModule:
         except Exception as e:
             raise
 
-    @staticmethod
-    def get_graphs_information(args):
+    def get_graphs_information(self, args):
         try:
             data, graph_database, tertiary_structure_method, distance_intervals, output_setting = args
 
@@ -181,8 +174,7 @@ class GraphAnalysisModule:
         except Exception as e:
             raise
 
-    @staticmethod
-    def drop_empty_graph(args):
+    def drop_empty_graph(self, args):
         graph_information, output_setting = args
 
         csv_file = output_setting['non_analyzed_graph']
@@ -193,11 +185,10 @@ class GraphAnalysisModule:
             sequences_to_exclude.to_csv(csv_file, index=False)
             sequence_df = sequence_df.drop(sequences_to_exclude.index)
             logging.getLogger('workflow_logger'). \
-                warning(f"Sequences with erroneous_activity. See: {csv_file}")
+                warning(f"Sequences that generate empty graphs. See: {csv_file}")
         return sequence_df
 
-    @staticmethod
-    def get_graphs_similarity(args):
+    def get_graphs_similarity(self, args):
         try:
             graph_information, distance_intervals, output_setting = args
 
@@ -267,7 +258,7 @@ def compute_similarity(args):
         return similarities, avg_similarity, min_similarity, max_similarity
     except ValueError as e:
         print("Error:", e)
-        return np.nan, np.nan, np.nan
+        return [], np.nan, np.nan, np.nan
 
 
 def get_eigenvalues_and_interval_str(graph_information, interval):
