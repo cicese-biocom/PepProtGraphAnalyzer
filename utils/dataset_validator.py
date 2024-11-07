@@ -15,8 +15,8 @@ class DatasetValidator(ABC):
             valid_df = self.check_duplicated_sequence_ids(dataset, output_setting)
             valid_df = self.check_duplicated_sequences(valid_df, output_setting)
             filtered_df = self.filter_sequences_with_non_natural_amino_acids(valid_df, output_setting)            
-            filtered_df = self.filter_sequences_with_erroneous_activity(filtered_df, output_setting)
-            filtered_df = self.filter_sequences_with_baseless_partitions(filtered_df, output_setting)
+            # filtered_df = self.filter_sequences_with_erroneous_activity(filtered_df, output_setting)
+            # filtered_df = self.filter_sequences_with_baseless_partitions(filtered_df, output_setting)
 
             if filtered_df.empty:
                 raise Exception(f"Empty dataset")
