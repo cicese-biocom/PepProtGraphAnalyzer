@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from graph.construct_graph import construct_distance_based_graph
+from models.esm2 import esm2_model_handler
 from utils.application_context import ApplicationContext
 from utils.batch import batch
 from utils.csv_parser import add_to_csv
@@ -47,6 +48,12 @@ class GraphAnalysisModule:
         distance_intervals_json_path = parameters.get('distance_intervals_json_path')
         distance_intervals = get_distance_intervals(distance_intervals_json_path)
 
+        # Step: Compute perplexities
+        model = esm2_model_handler.get_models('esm2_t36')
+        _, _, perplexities = esm2_model_handler.get_representations(data, model[0]['model'], show_pbar=True)
+        perplexities_output = data.merge(perplexities, on="sequence", how="inner")
+        perplexities_output.to_csv(output_setting['perplexities'], index=False)
+
         # Step 7: Construct distance based graph
         pdb_path = parameters.get('pdb_path')
         batch_size = parameters.get('batch_size')
@@ -66,8 +73,8 @@ class GraphAnalysisModule:
         graph_information = self.get_graphs_information(args)
 
         # Step 12: Drop empty graph
-       # args = (graph_information, output_setting)
-       # graph_information = self.drop_empty_graph(args)
+        args = (graph_information, output_setting)
+        graph_information = self.drop_empty_graph(args)
 
         # Step 12: Get graphs similarity
         args = (graph_information, distance_intervals, output_setting)
