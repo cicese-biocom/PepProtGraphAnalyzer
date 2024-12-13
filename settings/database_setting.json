@@ -5,7 +5,7 @@
       "password": "secret",
       "server": "mongodb",
       "port": 27017,
-      "database": "PeptideGraph"
+      "database": "PeptideGraphPaper"
     }
   }
 }
