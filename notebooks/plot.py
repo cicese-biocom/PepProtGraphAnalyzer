@@ -9,8 +9,14 @@ from plotnine import (
     element_text, labs, scale_y_log10, after_stat,
     guide_colorbar, geom_tile, scale_fill_gradient2,
     geom_boxplot, scale_fill_manual, scale_color_manual, 
-    geom_line
+    geom_line, aes, geom_segment, labs, scale_x_discrete,
+    element_rect, element_blank, element_line
 )
+
+from plotnine import (
+    ggplot, geom_boxplot, 
+)
+
 from plotnine.exceptions import PlotnineWarning
 import warnings
 
@@ -28,20 +34,34 @@ def plot_inter_amino_acid_distances(distance_filepath, distance_function, x_axis
 
     plot = (
             ggplot(inter_amino_acid_distances, aes(x="inter_amino_acid_distances", y=after_stat("count")))
-            + geom_histogram(fill="#a9ceea", color="#1b4f72", binwidth=binwidth)
-            + scale_x_continuous(breaks=xticks)
+            + geom_histogram(fill="white", color="blue", binwidth=binwidth, boundary=0)
+            + scale_x_continuous(breaks=xticks, expand=(0.002, 0.002))
             + scale_y_continuous(
                 labels=lambda y: _format_labels(y, max_number_of_sequences),
-                sec_trans=lambda y: _transform_data(y, max_number_of_sequences)
+                sec_trans=lambda y: _transform_data(y, max_number_of_sequences),
+                expand=(0.005, 0.005) 
             )
             + labs(
                 title="",
                 #x=f'{process_distance_name(distance_function)} distance-based Threshold',
-                x=f'Umbral de distancia basado en {process_distance_name(distance_function)}',
+                x=f'{process_distance_name(distance_function)} distance-based intervals',
                 #y="Frequency"
-                y="Frecuencia"
+                y="Number of Inter-Amino Acid Relationships"
               )
-            + theme_minimal()
+            + theme(
+                figure_size=(10, 6),
+                panel_background=element_rect(fill='white'),  # Fondo del gráfico blanco
+                panel_grid_major=element_blank(),  # Eliminar la cuadrícula mayor
+                panel_grid_minor=element_blank(),  # Eliminar la cuadrícula menor
+                axis_text_x=element_text(size = 14, color='black'),
+                axis_text_y=element_text(size = 14, color='black'),
+                axis_title_x=element_text( size = 14, color='black'),
+                axis_title_y=element_text(size = 14, color='black'),
+                legend_position='none',  # Eliminar la leyenda
+                plot_background=element_rect(fill=None, size=1),  # Borde alrededor del gráfico
+                panel_border=element_rect(fill=None, size=0.5),  # Borde alrededor del panel de gráficos
+                axis_line=element_line( size=0.5)  # Borde interno de los ejes
+            )
     )
 
     create_path(output_filepath)
@@ -154,7 +174,21 @@ def plot_density(input_filepath, output_filepath):
                   y=f'Densidad',
                   fill='Interval')  
             + theme_minimal()
-            + theme(axis_text_x=element_text(angle=45, hjust=1)))
+            # + theme(axis_text_x=element_text(angle=45, hjust=1)))
+            + theme(
+                figure_size=(10, 6),
+                panel_background=element_rect(fill='white'),  # Fondo del gráfico blanco
+                panel_grid_major=element_blank(),  # Eliminar la cuadrícula mayor
+                panel_grid_minor=element_blank(),  # Eliminar la cuadrícula menor
+                axis_text_x=element_text(family = "Times New Roman", size = 18, color='black'),
+                axis_text_y=element_text(family = "Times New Roman", size = 18, color='black'),
+                axis_title_x=element_text(family = "Times New Roman", size = 18, color='black'),
+                axis_title_y=element_text(family = "Times New Roman", size = 18, color='black'),
+                legend_position='none',  # Eliminar la leyenda
+                plot_background=element_rect(fill=None, size=1),  # Borde alrededor del gráfico
+                panel_border=element_rect(fill=None, size=0.5),  # Borde alrededor del panel de gráficos
+                axis_line=element_line( size=0.5)  # Borde interno de los ejes
+            ))
     
     create_path(output_filepath)
     plot.save(output_filepath, dpi=300)
@@ -291,6 +325,45 @@ def statistics(base_path, distance_functions, output_filepath, percentiles):
     
     return stats_by_function
 
+
+from scipy.stats import skew, kurtosis
+import pandas as pd
+from tqdm import tqdm
+
+def statistics2(base_path, distance_functions, output_filepath, percentiles):
+    all_data = []
+    
+    # Leer y procesar archivos de distancias
+    for distance_function in tqdm(distance_functions, desc="Processing distance functions"):
+        distance_filepath = f'{base_path}Inter_Amino_Acid_Distances-{distance_function}.csv'
+        distance_info = pd.read_csv(distance_filepath, header=None, names=['inter_amino_acid_distances'])
+    
+        distance_info['distance_function'] = distance_function
+        all_data.append(distance_info)
+    
+    # Concatenar todos los datos
+    all_data = pd.concat(all_data, ignore_index=True)
+    
+    # Calcular estadísticas descriptivas
+    stats_by_function = all_data.groupby('distance_function')['inter_amino_acid_distances'].describe(percentiles=percentiles)
+    
+    # Calcular Skewness y Kurtosis para cada grupo
+    skew_kurt_stats = all_data.groupby('distance_function')['inter_amino_acid_distances'].agg(
+        skewness=lambda x: skew(x, nan_policy='omit'),
+        kurtosis=lambda x: kurtosis(x, nan_policy='omit', fisher=True)
+    )
+    
+    # Combinar estadísticas descriptivas con Skewness y Kurtosis
+    stats_by_function = stats_by_function.reset_index().merge(
+        skew_kurt_stats.reset_index(),
+        on='distance_function',
+        how='left'
+    )
+    
+    # Guardar estadísticas en un archivo CSV
+    stats_by_function.to_csv(output_filepath, index=False)
+    
+    return stats_by_function
 
 
 def _format_labels(x, max_number_of_sequences):
