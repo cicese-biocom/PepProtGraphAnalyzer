@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Dict
-from utils import json_parser, file_system_handler
+from utils import json_parser
 
 
 def check_directory_exists(base_path: Path) -> Path:
