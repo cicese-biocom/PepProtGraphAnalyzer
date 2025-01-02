@@ -6,6 +6,7 @@ import pandas as pd
 FONT = 'Liberation Serif'
 
 
+# histogram
 def histogram(data, x_labels, y_label, bin_width=None, x_axis_step=None, x_axis_max=None, output=None, fig_size=(6, 4),
               x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8, y_ticks_fontsize=8):
     plt.rcParams['font.family'] = FONT
@@ -163,4 +164,40 @@ def boxplot(data, x_axis, y_axis, x_label, y_label, x_ticks=None, y_lim=None, ca
 
     # Show the plot
     return plt
+
+
+# bar_chart
+def bar_chart(data, x_axis, y_axis, x_label, y_label, output=None, fig_size=(6, 4), x_label_fontsize=10, y_label_fontsize=10,
+              x_ticks_fontsize=8, y_ticks_fontsize=8, x_ticks_rotation=None):
+    plt.rcParams['font.family'] = FONT
+
+    plt.figure(figsize=fig_size)
+
+    x = data[x_axis]
+    y = data[y_axis]
+
+    plt.bar(x, y, color='white', alpha=0.7, edgecolor='blue')
+
+    plt.xlabel(x_label, fontsize=x_label_fontsize, labelpad=15)
+    plt.ylabel(y_label, fontsize=y_label_fontsize, labelpad=15)
+
+    plt.xticks(rotation=x_ticks_rotation, fontsize=x_ticks_fontsize)
+    plt.yticks(fontsize=y_ticks_fontsize)
+
+    plt.grid(False)
+
+    # Add a border around the plot
+    plt.gca().spines['top'].set_visible(0.5)
+    plt.gca().spines['right'].set_visible(0.5)
+    plt.gca().spines['left'].set_linewidth(0.5)
+    plt.gca().spines['bottom'].set_linewidth(0.5)
+
+    plt.tight_layout()
+
+    if output:
+        plt.savefig(f'{output}.png', dpi=300, bbox_inches='tight')
+
+    return plt
+
+
 
