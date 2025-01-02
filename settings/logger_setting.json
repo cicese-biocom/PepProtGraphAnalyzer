@@ -22,7 +22,7 @@
   },
 
   "loggers": {
-    "workflow_logger": {
+    "logger": {
       "level": "DEBUG",
       "handlers": [
         "console",

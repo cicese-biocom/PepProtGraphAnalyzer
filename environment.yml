@@ -4,15 +4,15 @@ channels:
   - nodefaults
 
 dependencies:
-  - python=3.7
+  - python=3.9
+  - numpy<2.0
   - nvidia::cudatoolkit=11.3.1=ha36c431_9
-  - pytorch::pytorch=1.12.0=py3.7_cuda11.3_cudnn8.3.2_0
-  - pytorch::torchvision=0.13.0=py37_cu113
-  - pytorch::torchaudio=0.12.0=py37_cu113
+  - pytorch::pytorch-mutex=1.0=cuda
+  - pytorch::pytorch=1.12.1=py3.9_cuda11.3_cudnn8.3.2_0
+  - anaconda::pytorch-lightning=1.9.3=py39h06a4308_0
   - pip
   - pip:
       - torcheval
-      - numpy
       - pandas
       - tqdm
       - PyYAML
@@ -22,9 +22,16 @@ dependencies:
       - typing
       - typing_extensions
       - biopython
-      - pydantic==2.5.3
+      - pydantic-argparse
+      - pydantic-computed
       - pymongo
-      - injector==0.7.2
+      - injector
+      - fair-esm
       - fair-esm[esmfold]
       - 'dllogger @ git+https://github.com/NVIDIA/dllogger.git'
       - 'openfold @ git+https://github.com/aqlaboratory/openfold.git@4b41059694619831a7db195b7e0988fc4ff3a307'
+      - networkx-neo4j
+      - graphdatascience[networkx]
+      - pyarrow
+      - dask
+      - dask[dataframe]

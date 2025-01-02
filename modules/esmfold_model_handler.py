@@ -9,7 +9,7 @@ from utils import pdb_parser
 
 
 def predict_structures(data):
-    hub.set_dir(os.getcwd() + os.sep + "models/esmfold/")
+    hub.set_dir(os.getcwd() + os.sep + "modules/")
     model = esm.pretrained.esmfold_v1()
     model = model.eval().cuda()
 

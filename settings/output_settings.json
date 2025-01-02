@@ -3,6 +3,7 @@
     {
       "key": "log_path",
       "name": "Logs",
+      "modes": ["data_ingestion", "graph_analyzer"],
       "files": [
         {
           "key": "log_file",
@@ -39,30 +40,57 @@
       ]
     },
     {
-      "key": "analysis_path",
-      "name": "Graph_Analysis",
+      "key": "data_ingestion_path",
+      "name": "Analysis",
+      "modes": ["data_ingestion"],
       "files": [
         {
-          "key": "inter_amino_acid_distances",
-          "name": "Inter_Amino_Acid_Distances"
+          "key": "sequence_length",
+          "name": "Sequence-Length.csv"
         },
         {
-          "key": "graph_information",
-          "name": "Graph-information.csv"
+          "key": "sequence_amino_acid_composition",
+          "name": "Sequence-Amino_Acid_Composition.csv"
         },
         {
-          "key": "graph_similarity",
-          "name": "Graph-similarity.csv"
+          "key": "sequence_perplexities",
+          "name": "Sequence-Perplexities.csv"
+        },
+        {
+          "key": "sequence_inter_amino_acid_distances",
+          "name": "Sequence-Inter_Amino_Acid_Distances"
+        },
+        {
+          "key": "sequence_inter_amino_acid_distances_statistics",
+          "name": "Sequence_Inter_Amino_Acid_Distances-Statistics.csv"
+        }
+      ]
+    },
+    {
+      "key": "graph_analyzer_path",
+      "name": "Analysis",
+      "modes": ["graph_analyzer"],
+      "files": [
+        {
+          "key": "graph_density",
+          "name": "Graph-Density.csv"
+        },
+        {
+          "key": "graph_centralities",
+          "name": "Graph-Centralities.csv"
+        },
+        {
+          "key": "graph_eigen_values",
+          "name": "Graph-Eigen_Values.csv"
+        },
+        {
+          "key": "graph_similarities",
+          "name": "Graph-Similarities.csv"
         },
         {
           "key": "graph_similarity_summary",
-          "name": "Graph-similarity-summary.csv"
-        },
-        {
-          "key": "perplexities",
-          "name": "Perplexities.csv"
+          "name": "Graph-Similarity-Summary.csv"
         }
-
       ]
     }
   ]

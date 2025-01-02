@@ -38,7 +38,7 @@ def get_models(esm2_representation):
     return models
 
 
-def get_representations(data, model_name, show_pbar=True):
+def get_representations(data, model_name):
     """
     get_representations
     :param data:
@@ -50,7 +50,7 @@ def get_representations(data, model_name, show_pbar=True):
     """
     try:
         # esm2 checkpoints
-        hub.set_dir(os.getcwd() + os.sep + "models/esm2/")
+        hub.set_dir(os.getcwd() + os.sep + "modules/")
 
         no_gpu = False
         model, alphabet = esm.pretrained.load_model_and_alphabet_hub(model_name)
@@ -71,8 +71,7 @@ def get_representations(data, model_name, show_pbar=True):
         with torch.no_grad():
             for batch_idx, (labels, strs, toks) in tqdm(enumerate(data_loader),
                                                         total=len(data_loader),
-                                                        desc=f"Running ESM-2 {model_name} model",
-                                                        disable=show_pbar):
+                                                        desc=f"Running ESM-2 {model_name} model"):
                 if torch.cuda.is_available() and not no_gpu:
                     toks = toks.to(device="cuda", non_blocking=True)
 

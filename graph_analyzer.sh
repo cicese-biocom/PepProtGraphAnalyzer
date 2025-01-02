@@ -1,12 +1,12 @@
 #!/bin/bash
 
 dataset="datasets/StarPep/StarPep.csv"
-pdb_path="datasets/AMPDiscover/ESMFold_pdbs/"
+pdb_path="datasets/StarPep/ESMFold_pdbs/"
 tertiary_structure_method='esmfold'
 amino_acid_representation="CA"
 batch_size=56
 distance_intervals_json_path='datasets/json/distance_intervals.json'
-output_path='output/StarPep/Thesis/'
+output_path='output/StarPep/Paper/'
 
 python graph_analyzer.py \
     --dataset "$dataset" \

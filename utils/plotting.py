@@ -1,0 +1,166 @@
+import numpy as np
+from matplotlib import pyplot as plt
+import pandas as pd
+
+# Times New Roman equivalents:  Liberation Serif, Linux Libertine
+FONT = 'Liberation Serif'
+
+
+def histogram(data, x_labels, y_label, bin_width=None, x_axis_step=None, x_axis_max=None, output=None, fig_size=(6, 4),
+              x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8, y_ticks_fontsize=8):
+    plt.rcParams['font.family'] = FONT
+
+    if isinstance(data, pd.Series):
+        data = data.to_frame()
+
+    column_names = data.columns
+    n_cols = len(column_names)
+    n_rows = 1
+
+    fig, axs = plt.subplots(n_rows, n_cols, figsize=(n_cols * fig_size[0], fig_size[1]))
+
+    if n_cols == 1:
+        axs = [axs]
+
+    if not isinstance(x_labels, list):
+        x_labels = [x_labels] * n_cols
+    if not isinstance(bin_width, list):
+        bin_width = [bin_width] * n_cols
+    if not isinstance(x_axis_step, list):
+        x_axis_step = [x_axis_step] * n_cols
+
+    for i, column in enumerate(column_names):
+        data_column = data[column]
+
+        bins = None
+        if bin_width is not None:
+            bins = np.arange(data_column.min(), data_column.max(), bin_width[i])
+
+        axs[i].hist(
+            data_column,
+            color='white',
+            edgecolor='blue',
+            alpha=0.7,
+            bins=bins,
+        )
+
+        axs[i].set_xlabel(x_labels[i], fontsize=x_label_fontsize, labelpad=15)
+        axs[i].tick_params(axis='x', labelsize=x_ticks_fontsize)
+        axs[i].tick_params(axis='y', labelsize=y_ticks_fontsize)
+        axs[i].set_xlim(left=0.01)
+
+        if x_axis_max is None:
+            x_max = data_column.max()
+        else:
+            x_max = x_axis_max
+
+        if x_axis_step is not None:
+            axs[i].xaxis.set_ticks(np.arange(0, x_max + 0.01, x_axis_step[i]))
+
+        axs[i].grid(axis='y', linestyle='--', alpha=0.6)
+        axs[i].grid(False)
+        axs[i].spines['top'].set_visible(False)
+        axs[i].spines['right'].set_visible(False)
+        axs[i].spines['left'].set_linewidth(0.5)
+        axs[i].spines['bottom'].set_linewidth(0.5)
+
+    axs[0].set_ylabel(y_label, fontsize=y_label_fontsize, labelpad=15)
+
+    plt.tight_layout()
+
+    if output:
+        plt.savefig(f'{output}.png', dpi=300, bbox_inches='tight')
+
+    plt.show()
+
+    return plt
+
+
+# boxplot
+def boxplot(data, x_axis, y_axis, x_label, y_label, x_ticks=None, y_lim=None, categories=None,
+            output=None, fig_size=(6, 4), x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8, y_ticks_fontsize=8):
+    plt.rcParams['font.family'] = FONT
+
+    # Convert x_axis to string type
+    data[x_axis] = data[x_axis].astype(str)
+
+    # Convert to categorical type with or without a specified label_order_x
+    if categories:
+        data[x_axis] = pd.Categorical(data[x_axis], categories=categories, ordered=True)
+    else:
+        data[x_axis] = pd.Categorical(data[x_axis])
+
+    # Create the box plot
+    plt.figure(figsize=fig_size)
+
+    box = plt.boxplot(
+        [data[data[x_axis] == cat][y_axis] for cat in data[x_axis].cat.categories],
+        patch_artist=True,  # Fill the boxes with color
+        # showmeans=True,  # Do not show the mean
+        widths=0.43  # Control the width of the boxes
+    )
+
+    for patch in box['boxes']:
+        patch.set(facecolor='white', edgecolor='blue', linewidth=0.8)
+
+    for whisker in box['whiskers']:
+        whisker.set(color='black', linewidth=0.6, linestyle="--")
+
+    for cap in box['caps']:
+        cap.set(color='black', linewidth=0.6)
+
+    for median in box['medians']:
+        median.set(color='red', linewidth=0.8)
+
+    for flier in box['fliers']:
+        flier.set(marker='+', color='#ff0000', markersize=5, alpha=1)
+
+    # Customize x-tick labels
+    if x_ticks is None:
+        x_ticks = data[x_axis].cat.categories
+
+    plt.xticks(
+        ticks=range(1, len(data[x_axis].cat.categories) + 1),
+        labels=x_ticks,
+        fontsize=x_ticks_fontsize
+    )
+
+    plt.yticks(
+        fontsize=y_ticks_fontsize
+    )
+
+    # Customize labels
+    plt.xlabel(
+        x_label,
+        fontsize=x_label_fontsize,
+        labelpad=15
+    )
+
+    plt.ylabel(
+        y_label,
+        fontsize=y_label_fontsize,
+        labelpad=15
+    )
+
+    if y_lim is not None:
+        ylim_min, ylim_max = y_lim
+
+        if ylim_min is not None and ylim_max is not None and ylim_min < ylim_max:
+            plt.ylim(ylim_min, ylim_max)
+
+    # Remove the grid
+    plt.grid(False)
+
+    # Add a border around the plot
+    plt.gca().spines['top'].set_visible(0.5)
+    plt.gca().spines['right'].set_visible(0.5)
+    plt.gca().spines['left'].set_linewidth(0.5)
+    plt.gca().spines['bottom'].set_linewidth(0.5)
+
+    # Save the plot
+    if output:
+        plt.savefig(f'{output}.png', dpi=300, bbox_inches='tight')
+
+    # Show the plot
+    return plt
+

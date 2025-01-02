@@ -63,7 +63,7 @@ def _angular_separation(point1, point2):
     return np.subtract(1, np.divide(np.sum(np.multiply(point1, point2)), np.sqrt(np.dot(np.sum(np.power(point1, 2)), np.sum(np.power(point2, 2))))))
 
 
-def translate_positive_coordinates(coordinates):
+def translate_to_positive_coordinates(coordinates):
     min_x = min(min(coordinate[0] for coordinate in coordinates), 0)
     min_y = min(min(coordinate[1] for coordinate in coordinates), 0)
     min_z = min(min(coordinate[2] for coordinate in coordinates), 0)

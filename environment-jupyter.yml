@@ -1,12 +1,15 @@
-name: notebooks-env
+name: jupyter-env
 
 channels:
-  - conda-forge
+  - nodefaults
 
 dependencies:
-  - python=3.11.6
-  - pandas=2.2.0
-  - numpy
-  - tqdm=4.66.2
-  - plotnine
-  - pyarrow
+  - conda-forge::matplotlib=3.10.0
+  - conda-forge::python=3.11.6
+  - conda-forge::pandas=2.2.0
+  - conda-forge::numpy=1.24.4
+  - conda-forge::tqdm=4.66.2
+  - conda-forge::dask
+  - conda-forge::pyarrow
+  - conda-forge::biopython
+
