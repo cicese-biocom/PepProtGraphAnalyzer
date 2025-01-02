@@ -198,8 +198,6 @@ class DataIngestionPipeline(Pipeline):
         pass
 
 
-
-
 class GraphAnalyzerPipeline(Pipeline):
     def analyze_data(self, data):
         pass
@@ -221,16 +219,3 @@ def _compute_distance(sequence, atom_coordinates, distance_functions):
 
     return distances
 
-
-def _compute_distance_batch(sequences_batch, atom_coordinates_batch, distance_functions):
-    distances = []
-    for sequence, atom_coordinates in zip(sequences_batch, atom_coordinates_batch):
-        number_of_amino_acid = len(atom_coordinates)
-
-        for i in range(number_of_amino_acid):
-            for j in range(i + 1, number_of_amino_acid):
-                for distance_function in distance_functions:
-                    distance_value = distance(atom_coordinates[i], atom_coordinates[j], distance_function)
-                    distances.append((sequence, i, j, distance_function, distance_value))
-
-    return distances
