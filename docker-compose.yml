@@ -20,7 +20,7 @@ services:
       - /home/jovyan/work/notebooks/utils
     volumes:
       - ./datasets:/home/jovyan/work/datasets
-      - ./data:/home/jovyan/work/data
+      - ./data_parquet_starpep:/home/jovyan/work/data_parquet_starpep
       - ./notebooks:/home/jovyan/work/notebooks
       - ./output:/home/jovyan/work/output
       - ./utils/pdb_parser.py:/home/jovyan/work/notebooks/utils/pdb_parser.py:ro
