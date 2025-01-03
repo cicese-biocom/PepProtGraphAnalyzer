@@ -8,34 +8,34 @@ FONT = 'Liberation Serif'
 
 # histogram
 def histogram(data, x_labels, y_label, bin_width=None, x_axis_step=None, x_axis_max=None, output=None, fig_size=(6, 4),
-              x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8, y_ticks_fontsize=8):
+              x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8, y_ticks_fontsize=8, n_rows=None, n_cols=None, titles=None):
     plt.rcParams['font.family'] = FONT
 
     if isinstance(data, pd.Series):
         data = data.to_frame()
 
     column_names = data.columns
-    n_cols = len(column_names)
-    n_rows = 1
+    num_subplots = len(column_names)
 
-    fig, axs = plt.subplots(n_rows, n_cols, figsize=(n_cols * fig_size[0], fig_size[1]))
+    n_rows, n_cols = _calculate_layout(num_subplots, n_rows, n_cols)
 
-    if n_cols == 1:
-        axs = [axs]
+    fig, axs = plt.subplots(n_rows, n_cols, figsize=(n_cols * fig_size[0], n_rows * fig_size[1]), constrained_layout=True)
+
+    axs = np.array(axs).reshape(-1)
 
     if not isinstance(x_labels, list):
-        x_labels = [x_labels] * n_cols
+        x_labels = [x_labels] * num_subplots
     if not isinstance(bin_width, list):
-        bin_width = [bin_width] * n_cols
+        bin_width = [bin_width] * num_subplots
     if not isinstance(x_axis_step, list):
-        x_axis_step = [x_axis_step] * n_cols
+        x_axis_step = [x_axis_step] * num_subplots
 
     for i, column in enumerate(column_names):
         data_column = data[column]
 
         bins = None
-        if bin_width is not None:
-            bins = np.arange(data_column.min(), data_column.max(), bin_width[i])
+        if bin_width[i] is not None:
+            bins = np.arange(data_column.min(), data_column.max() + bin_width[i], bin_width[i])
 
         axs[i].hist(
             data_column,
@@ -50,24 +50,24 @@ def histogram(data, x_labels, y_label, bin_width=None, x_axis_step=None, x_axis_
         axs[i].tick_params(axis='y', labelsize=y_ticks_fontsize)
         axs[i].set_xlim(left=0.01)
 
-        if x_axis_max is None:
-            x_max = data_column.max()
-        else:
-            x_max = x_axis_max
-
-        if x_axis_step is not None:
+        x_max = x_axis_max if x_axis_max is not None else data_column.max()
+        if x_axis_step[i] is not None:
             axs[i].xaxis.set_ticks(np.arange(0, x_max + 0.01, x_axis_step[i]))
 
-        axs[i].grid(axis='y', linestyle='--', alpha=0.6)
         axs[i].grid(False)
         axs[i].spines['top'].set_visible(False)
         axs[i].spines['right'].set_visible(False)
         axs[i].spines['left'].set_linewidth(0.5)
         axs[i].spines['bottom'].set_linewidth(0.5)
 
+        # Add title to the right if provided
+        if titles is not None and len(titles) == num_subplots:
+            axs[i].set_title(titles[i], loc='right', fontsize=x_label_fontsize)
+
     axs[0].set_ylabel(y_label, fontsize=y_label_fontsize, labelpad=15)
 
-    plt.tight_layout()
+    for j in range(num_subplots, len(axs)):
+        axs[j].axis('off')
 
     if output:
         plt.savefig(f'{output}.png', dpi=300, bbox_inches='tight')
@@ -198,6 +198,26 @@ def bar_chart(data, x_axis, y_axis, x_label, y_label, output=None, fig_size=(6, 
         plt.savefig(f'{output}.png', dpi=300, bbox_inches='tight')
 
     return plt
+
+
+def _calculate_layout(num_subplots, n_rows=None, n_cols=None):
+    if n_rows is None and n_cols is None:
+        n_rows = 1
+        n_cols = num_subplots
+
+    if n_rows is not None:
+        # Calculate the number of columns
+        n_rows = min(n_rows, num_subplots)
+        n_cols = -(-num_subplots // n_rows)  # Ceiling division
+    elif n_cols is not None:
+        # Calculate the number of rows
+        n_cols = min(n_cols, num_subplots)
+        n_rows = -(-num_subplots // n_cols)  # Ceiling division
+
+    if n_rows * n_cols < num_subplots:
+        raise ValueError(f"The layout with {n_rows} rows and {n_cols} columns cannot fit {num_subplots} subplots.")
+
+    return n_rows, n_cols
 
 
 
