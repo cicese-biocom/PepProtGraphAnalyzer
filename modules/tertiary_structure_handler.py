@@ -35,7 +35,7 @@ def get_atom_coordinates_matrices(data: pd.DataFrame, parameters: BaseModel):
 
     
 def _load_tertiary_structure(data: pd.DataFrame, pdb_path: DirectoryPath, csv_file: FilePath):
-    sequences_to_exclude = pd.DataFrame()
+    sequences_to_exclude = []
     pdbs = []
     try:
         for index, row in tqdm(data.iterrows(), total=len(data), desc="Loading pdb files"):
@@ -47,7 +47,8 @@ def _load_tertiary_structure(data: pd.DataFrame, pdb_path: DirectoryPath, csv_fi
         sequences_to_exclude = sequences_to_exclude.append(row)
 
     # Raise exception if sequences_to_exclude is not empty
-    if not sequences_to_exclude.empty:
+    if sequences_to_exclude:
+        sequences_to_exclude = pd.DataFrame(sequences_to_exclude)
         sequences_to_exclude.to_csv(csv_file, index=False)
         data = data.drop(sequences_to_exclude.index)
 
