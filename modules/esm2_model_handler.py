@@ -99,7 +99,7 @@ def get_representations(data, model_name):
                 perplexities.append(
                     {
                         'sequence': strs[0],
-                        'perplexity': perplexity_metric.compute().item()
+                        'esm2_perplexity': perplexity_metric.compute().item()
                     })
 
                 perplexity_metric.reset()

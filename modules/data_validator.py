@@ -89,28 +89,10 @@ class SequenceValidator(DataValidator):
 
         return data
 
+
 class DataValidatorContext:
     def __init__(self, data_validator: DataValidator) -> None:
         self._data_validator = data_validator
 
     def validate(self, **kwargs):
         return self._data_validator.validate(**kwargs)
-
-
-if __name__ == '__main__':
-    # example: labeled
-    data = {
-        'id': ['seq0', 'seq1', 'seq2', 'seq4'],
-        'sequence': ['ARNDCQXEG', 'ARNDCQXEG', 'RGRRQD', 'ARGGGX']
-    }
-    data = pd.DataFrame(data)
-
-    output_paths = {
-        'duplicated_sequence_ids_file': 'duplicated_ids.csv',
-        'duplicated_sequences_file': 'duplicated_sequences.csv',
-        'sequences_with_non_natural_amino_acids_file': 'invalid_sequences.csv'
-    }
-
-    database_context = DataValidatorContext(SequenceValidator())
-    df1 = database_context.validate(data=data, output_paths=output_paths)
-    print(df1)

@@ -3,7 +3,7 @@
     {
       "key": "log_path",
       "name": "Logs",
-      "modes": ["data_ingestion", "graph_analyzer"],
+      "modes": ["data_ingestion", "sequence_analyzer", "graph_analyzer"],
       "files": [
         {
           "key": "log_file",
@@ -36,13 +36,23 @@
         {
           "key": "non_analyzed_graph",
           "name": "Non_analyzed_graph.csv"
+        },
+        {
+          "key": "unprocessed_sequences",
+          "name": "Unprocessed_sequences.csv"
         }
       ]
     },
     {
       "key": "data_ingestion_path",
-      "name": "Analysis",
+      "name": "Data_Ingestion",
       "modes": ["data_ingestion"],
+      "files": []
+    },
+    {
+      "key": "sequence_analyzer_path",
+      "name": "Sequence_Analysis",
+      "modes": ["sequence_analyzer"],
       "files": [
         {
           "key": "sequence_length",
@@ -68,7 +78,7 @@
     },
     {
       "key": "graph_analyzer_path",
-      "name": "Analysis",
+      "name": "Graph_Analysis",
       "modes": ["graph_analyzer"],
       "files": [
         {

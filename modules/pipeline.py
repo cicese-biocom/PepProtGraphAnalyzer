@@ -6,7 +6,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import dask.dataframe as dd
-from dask.array import stats
 from tqdm import tqdm
 from modules import esm2_model_handler
 from modules.application_context import ApplicationContext
@@ -14,7 +13,6 @@ from modules.argument_parser import CommonArguments, TertiaryStructurePrediction
 from modules.tertiary_structure_handler import get_atom_coordinates_matrices
 from utils.distances import distance
 from modules.logging_handler import LoggingHandler
-
 
 AMINO_ACIDS = list("ARNDCQEGHILKMFPSTWYV")
 AMINO_ACID_3LETTER_CODES = [
@@ -25,21 +23,24 @@ AMINO_ACID_3LETTER_CODES = [
 
 class Pipeline(ABC):
     def __init__(self, parameters: CommonArguments):
-        self._context = ApplicationContext()
         self._parameters = parameters
+        self._context = ApplicationContext(self._parameters.mode)
 
     def execute(self):
-        # Step 1: Initialize_logger
+        # Step 1: Initialize logger
         self.initialize_logger()
 
-        # Step 2: Load data
+        # Step 2: Load input data
         data = self.load_data()
 
-        # Step 4: Validate data
+        # Step 3: Validate input data
         data = self.validate_data(data)
 
-        # Step 5: Analyze data
-        self.analyze_data(data)
+        # Step 4: Get missing sequences in the database
+        data = self.get_sequences_to_process(data)
+
+        # Step 6: Process data
+        self.process_data(data)
 
     def initialize_logger(self) -> None:
         LoggingHandler.initialize_logger(
@@ -60,26 +61,38 @@ class Pipeline(ABC):
         return data
 
     @abstractmethod
-    def analyze_data(self, data):
+    def process_data(self, data):
+        pass
+
+    def get_sequences_to_process(self, data):
         pass
 
 
 class DataIngestionPipeline(Pipeline):
-    def analyze_data(self, data):
+    def get_sequences_to_process(self, data):
+        missing_sequences = self._context.data_manager.get_missing_sequences(dd.from_pandas(data)).compute()
+
+        if missing_sequences.empty:
+            logging.getLogger('logger').info(f"All sequences have already been processed.")
+            quit()
+
+        return missing_sequences
+
+    def process_data(self, data: pd.DataFrame):
         # Step 1: Calculate sequence length
         data = self._calculate_sequence_length(data)
 
-        # Step 2: Calculate residue composition
-        self._calculate_amino_acid_composition(data)
+        # Step 2: Calculate perplexities
+        data = self._calculate_perplexities(data)
 
-        # Step 3: Calculate perplexities
-        self._calculate_perplexities(data)
+        # Step 3: Save sequences to parquet
+        data = self._save_sequences_to_db(data)
 
         # Step 4: Calculate inter-amino acid distance
-        self._compute_inter_amino_acid_distance(data)
+        distances = self._compute_inter_amino_acid_distance(data)
 
-        # Step 5: Calculate inter-amino acid distance statistics
-        self._calculate_statistics()
+        # Step 5: Save distances to parquet
+        self._save_distances_to_db(distances)
 
     def _calculate_sequence_length(self, data: pd.DataFrame):
         data = data.assign(length=data['sequence'].str.len())
@@ -96,11 +109,102 @@ class DataIngestionPipeline(Pipeline):
         if maximum_sequence_length:
             data = data[data['length'] <= maximum_sequence_length]
 
-        data.to_csv(self._parameters.output_paths['sequence_length'], index=False)
+        logging.getLogger('logger').info(f"The sequence length calculation has been successfully completed.")
 
-        logging.getLogger('logger').info("Calculated sequence length")
+        return data
 
-        return data.drop('length', axis=1)
+    def _calculate_perplexities(self, data: pd.DataFrame):
+        if self._parameters.tertiary_structure_method == TertiaryStructurePredictionMethod.esmfold:
+            esm2_model = esm2_model_handler.get_models('esm2_t36')
+
+            _, _, perplexities = esm2_model_handler.get_representations(data, esm2_model[0]['model'])
+            data = data.merge(perplexities, on="sequence", how="inner")
+
+            logging.getLogger('logger').info(f"The perplexity calculation has been successfully completed.")
+        else:
+            data['esm2_perplexity'] = np.nan
+
+        return data
+
+    def _compute_inter_amino_acid_distance(self, data: pd.DataFrame):
+        # Get atom coordinate
+        atom_coordinates_matrices = get_atom_coordinates_matrices(data, self._parameters)
+
+        num_cores = multiprocessing.cpu_count()
+
+        args = [
+            (row['sequence_id'], atom_coordinates, self._parameters.distance_functions)
+            for (_, row), atom_coordinates in zip(data.iterrows(), atom_coordinates_matrices)
+        ]
+
+        with tqdm(total=len(args), desc="Computing inter-amino acid distance") as progress:
+            with ProcessPoolExecutor(max_workers=num_cores) as pool:
+                futures = []
+                for arg in args:
+                    future = pool.submit(_compute_distance, *arg)
+                    future.add_done_callback(lambda p: progress.update())
+                    futures.append(future)
+
+                distances = [item for future in futures for item in future.result()]
+                distances = pd.DataFrame(distances,
+                                         columns=["sequence_id", "aa_src",
+                                                  "aa_dst"] + self._parameters.distance_functions)
+
+        logging.getLogger('logger').info(f"The inter-amino acid distance computation has been successfully completed.")
+
+        return distances
+
+    def _save_sequences_to_db(self, data):
+        data_new = self._context.data_manager.append_sequences(dd.from_pandas(data))
+        data_new = data_new[["sequence_id", "sequence", "id"]]
+
+        logging.getLogger('logger').info("Successfully saved %d sequences to the database.", len(data))
+
+        return data_new.compute()
+
+    def _save_distances_to_db(self, distances):
+        self._context.data_manager.append_distances(dd.from_pandas(distances))
+        logging.getLogger('logger').info("Successfully saved %d distances to the database.", len(distances))
+
+
+class AnalyzerPipeline(Pipeline):
+    def get_sequences_to_process(self, data):
+        self._context.data_manager.initialize_analysis_data(dd.from_pandas(data))
+        return data
+
+
+class SequenceAnalyzerPipeline(AnalyzerPipeline):
+    def process_data(self, data: pd.DataFrame):
+        # Get sequence length
+        self._get_sequence_length()
+
+        # Get perplexities
+        self._get_perplexities()
+
+        # Get amino acid composition
+        self._calculate_amino_acid_composition(data)
+
+        # Get inter-amino acid distance statistics
+        self._get_inter_amino_acid_distance_statistics()
+
+        # Finalize analysis data
+        self._context.data_manager.finalize_analysis_data()
+
+    def _get_sequence_length(self):
+        sequence_length = self._context.data_manager.get_sequence_length()
+
+        file_path = self._parameters.output_paths['sequence_length']
+        sequence_length.to_csv(file_path, index=False)
+
+        logging.getLogger('logger').info(f"Sequence lengths successfully recovered. See: {file_path}")
+
+    def _get_perplexities(self):
+        perplexities = self._context.data_manager.get_perplexities()
+
+        file_path = self._parameters.output_paths['sequence_perplexities']
+        perplexities.to_csv(file_path, index=False)
+
+        logging.getLogger('logger').info(f"Perplexities successfully recovered. See: {file_path}")
 
     def _calculate_amino_acid_composition(self, data: pd.DataFrame):
         counts = np.zeros(len(AMINO_ACIDS), dtype=np.int64)
@@ -116,90 +220,23 @@ class DataIngestionPipeline(Pipeline):
             "count": counts
         })
 
-        amino_acid_composition.to_csv(self._parameters.output_paths['sequence_amino_acid_composition'], index=False)
+        file_path = self._parameters.output_paths['sequence_amino_acid_composition']
+        amino_acid_composition.to_csv(file_path, index=False)
 
-        logging.getLogger('logger').info("Calculated amino acid composition")
+        logging.getLogger('logger').info(f"The amino acid composition has been successfully calculated. See: {file_path}")
 
-    def _calculate_perplexities(self, data: pd.DataFrame):
-        if self._parameters.tertiary_structure_method == TertiaryStructurePredictionMethod.esmfold:
-            esm2_model = esm2_model_handler.get_models('esm2_t36')
+    def _get_inter_amino_acid_distance_statistics(self):
+        statistics = self._context.data_manager.get_distance_statistics(self._parameters.distance_functions)
 
-            _, _, perplexities = esm2_model_handler.get_representations(data, esm2_model[0]['model'])
-            perplexities = data.merge(perplexities, on="sequence", how="inner")
+        file_path = self._parameters.output_paths['sequence_inter_amino_acid_distances_statistics']
+        statistics.to_csv(file_path, index=False)
 
-            perplexities.to_csv(self._parameters.output_paths['sequence_perplexities'], index=False)
-
-            logging.getLogger('logger').info("Calculated perplexities")
-
-    def _compute_inter_amino_acid_distance(self, data: pd.DataFrame):
-        # Get atom coordinate
-        atom_coordinates_matrices = get_atom_coordinates_matrices(data, self._parameters)
-
-        num_cores = multiprocessing.cpu_count()
-
-        args = [
-            (row['sequence'], atom_coordinates, self._parameters.distance_functions)
-            for (_, row), atom_coordinates in zip(data.iterrows(), atom_coordinates_matrices)
-        ]
-
-        with tqdm(total=len(args), desc="Computing inter-amino acid distance") as progress:
-            with ProcessPoolExecutor(max_workers=num_cores) as pool:
-                futures = []
-                for arg in args:
-                    future = pool.submit(_compute_distance, *arg)
-                    future.add_done_callback(lambda p: progress.update())
-                    futures.append(future)
-
-                distances = [item for future in futures for item in future.result()]
-                distances = pd.DataFrame(distances,
-                                         columns=["sequence", "aminoacid_source",
-                                                  "aminoacid_target"] + self._parameters.distance_functions)
-
-                dask_distances = dd.from_pandas(distances, npartitions=4)
-                dask_distances.to_parquet(
-                    'data',
-                    write_metadata_file=False
-                )
-
-        logging.getLogger('logger').info("Calculated inter-amino acid distances")
-
-    def _calculate_statistics(self):
-        statistics = {}
-        for distance_function in tqdm(self._parameters.distance_functions, desc="Computing inter-amino acid distance statistics"):
-            column = dd.read_parquet('data/', columns=[distance_function])
-
-            column_array = column.to_dask_array(lengths=True)
-            column_computed = column.compute()
-
-            statistics[distance_function] = {
-                "count": column.count().compute().iloc[0],
-                "mean": column.mean().compute().iloc[0],
-                "std": column.std().compute().iloc[0],
-                "min": column.min().compute().iloc[0],
-                "p25": column_computed.quantile(0.25).iloc[0],
-                "p50": column_computed.quantile(0.50).iloc[0],
-                "p75": column_computed.quantile(0.75).iloc[0],
-                "max": column.max().compute().iloc[0],
-                "skewness": stats.skew(column_array).compute()[0],
-                "kurtosis": stats.kurtosis(column_array, fisher=False).compute()[0]
-            }
-
-        statistics = pd.DataFrame(statistics).T
-        statistics.index.name = "distance_function"
-        statistics.reset_index(inplace=True)
-
-        statistics["count"] = statistics["count"].astype(int)
-
-        statistics.to_csv(self._parameters.output_paths['sequence_inter_amino_acid_distances_statistics'], index=False)
-
-        logging.getLogger('logger').info("Calculated inter-amino acid distances statistics")
-
-    def _save_to_csv_inter_amino_acid_distance_per_distance_function(self, distances: dd.DataFrame):
-        pass
+        logging.getLogger('logger').info(
+            f"Inter-amino acid distance statistics successfully computed. See: {file_path}")
 
 
-class GraphAnalyzerPipeline(Pipeline):
-    def analyze_data(self, data):
+class GraphAnalyzerPipeline(AnalyzerPipeline):
+    def process_data(self, data):
         pass
 
 
@@ -218,4 +255,3 @@ def _compute_distance(sequence, atom_coordinates, distance_functions):
             distances.append((sequence, i, j, *distance_values))
 
     return distances
-

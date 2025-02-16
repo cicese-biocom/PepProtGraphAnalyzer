@@ -1,4 +1,3 @@
-import json
 import logging
 import logging.config
 from utils import json_parser as json_parser
