@@ -13,6 +13,7 @@ from modules.argument_parser import CommonArguments, TertiaryStructurePrediction
 from modules.tertiary_structure_handler import get_atom_coordinates_matrices
 from utils.distances import distance
 from modules.logging_handler import LoggingHandler
+from utils.json_parser import get_distance_intervals
 
 AMINO_ACIDS = list("ARNDCQEGHILKMFPSTWYV")
 AMINO_ACID_3LETTER_CODES = [
@@ -237,7 +238,20 @@ class SequenceAnalyzerPipeline(AnalyzerPipeline):
 
 class GraphAnalyzerPipeline(AnalyzerPipeline):
     def process_data(self, data):
-        pass
+        # Obtaining distance-based graph metrics
+        self._get_distance_based_graph_metrics()
+
+    def _get_distance_based_graph_metrics(self):
+        distance_intervals = get_distance_intervals(self._parameters.distance_intervals_json)
+        graph_metrics = self._context.data_manager.get_graph_metrics(distance_intervals, batch_size=1000)
+
+        graph_metrics.to_csv("metrics_results_1.csv", index=False)
+
+        file_path = self._parameters.output_paths['graph_metrics']
+        graph_metrics.to_csv(file_path, index=False)
+
+        logging.getLogger('logger').info(
+            f"Graph metrics successfully computed. See: {file_path}")
 
 
 def _compute_distance(sequence, atom_coordinates, distance_functions):

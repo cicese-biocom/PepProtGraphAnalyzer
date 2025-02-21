@@ -1,14 +1,25 @@
 import logging
 import os
 import shutil
+from functools import partial
+
 import yaml
 from dask.array import stats
 import dask.dataframe as dd
 from pathlib import Path
 import pandas as pd
 import pyarrow as pa
-from tqdm import tqdm
 from typing import List
+import multiprocessing
+from statistics import mean
+import dask
+import networkx as nx
+import numpy as np
+from dask.dataframe import dd
+from dask.diagnostics import ProgressBar
+from tqdm import tqdm
+from utils.batch import batch
+
 
 
 class ParquetManager:
@@ -46,7 +57,7 @@ class ParquetManager:
     def read_parquet(self, columns=None, filters=None, partition_size=None):
         if self.empty:
             return None
-        
+
         data = dd.read_parquet(
             path=self._path,
             columns=columns,
@@ -57,7 +68,7 @@ class ParquetManager:
             data = self._repartition_data(data, partition_size)
         return data
 
-    def write_parquet(self, new_data: dd.DataFrame, write_index=False, overwrite=False):
+    def write_parquet(self, new_data: dd.DataFrame, write_index=True, overwrite=False):
         """Writes a Dask DataFrame to a Parquet file."""
         new_data = self._repartition_data(new_data, 300)
 
@@ -81,8 +92,8 @@ class ParquetManager:
             new_data = dd.concat([existing_data, new_data])
 
         self.write_parquet(
-            new_data, 
-            write_index=False, 
+            new_data,
+            write_index=True,
             overwrite=True
         )
 
@@ -173,7 +184,7 @@ class DataManager:
             if len(distances) != len(filtered_distances):
                 self._distances_manager.write_parquet(
                     filtered_distances,
-                    write_index=False,
+                    write_index=True,
                     overwrite=True
                 )
 
@@ -260,7 +271,7 @@ class DataAnalysisManager(DataManager):
             write_index=False,
             overwrite=True
         )
-        
+
         return existing_sequences['sequence_id'].compute().tolist()
 
     def _prepare_distances(self, sequence_ids: List):
@@ -286,6 +297,13 @@ class DataAnalysisManager(DataManager):
             write_index=False,
             overwrite=True
         )
+
+    def get_sequences(self):
+        sequences = self._sequences_manager_temp.read_parquet(
+            columns=["sequence_id", "sequence", "length"],
+            partition_size=100
+        )
+        return sequences.compute()
 
     def get_sequence_length(self):
         data = self._sequences_manager_temp.read_parquet(
@@ -332,3 +350,106 @@ class DataAnalysisManager(DataManager):
         statistics["count"] = statistics["count"].astype(int)
 
         return statistics
+    
+    def get_graph_metrics(self, distance_intervals, batch_size=1000):
+        sequences = self.get_sequences()
+
+        tasks = []
+        for distance_interval in tqdm(distance_intervals, total=len(distance_intervals), desc="Creating tasks for metrics calculation"):
+            distance_function = distance_interval['distance_function']
+            interval = distance_interval['interval']
+
+            for sequence_batch in batch(sequences, batch_size=batch_size):
+                distances = self.get_distances(distance_function, interval, sequence_batch['sequence_id'].tolist())
+
+                metrics = distances.groupby('sequence_id', group_keys=True).apply(
+                    lambda distances_group, df=distance_function, iv=interval, sb=sequence_batch:
+                    self._get_distance_based_graph_metrics(
+                        distances_group,
+                        df,
+                        iv,
+                        sb[sb['sequence_id'] == distances_group.name]
+                    ),
+                    meta=('graph', 'object')
+                )
+
+                tasks.append(metrics)
+
+        dask.config.set(scheduler='processes', num_workers=multiprocessing.cpu_count())
+        with ProgressBar():
+            computed_metrics = dask.compute(*tasks)
+
+        metrics_dicts = []
+        for metric in computed_metrics:
+            for metric_dict in metric.values:
+                metrics_dicts.append(metric_dict)
+
+        return pd.DataFrame(metrics_dicts)
+
+    def get_distances(self, distance_function, interval, sequence_ids):
+        distances = self._distances_manager_temp.read_parquet(
+            columns=['sequence_id', 'aa_src', 'aa_dst'],
+            filters=[
+                (distance_function, '>', interval[0]),
+                (distance_function, '<=', interval[1]),
+                ('sequence_id', 'in', sequence_ids)
+            ]  # ,
+            # partition_size=100
+        )
+
+        return distances
+
+    def _get_distance_based_graph_metrics(self, sequence_group, distance_function, interval, sequence_data):
+        graph = self._build_distance_based_graphs(sequence_group, distance_function, interval, sequence_data)
+        metrics = self._compute_graph_metrics(graph)
+        return metrics
+
+    @staticmethod
+    def _build_distance_based_graphs(distances_data, distance_function, interval, sequence_data):
+        # empty graph
+        graph = nx.Graph()
+
+        # graph metadata
+        graph.graph['sequence'] = sequence_data['sequence'].iloc[0]
+        graph.graph['distance_function'] = distance_function
+        graph.graph['distance_min'] = interval[0]
+        graph.graph['distance_max'] = interval[1]
+
+        # add nodes
+        graph.add_nodes_from(range(sequence_data['length'].iloc[0]))
+
+        # add edges
+        if not distances_data.empty:
+            graph.add_edges_from(zip(distances_data['aa_src'].values, distances_data['aa_dst'].values))
+
+        return graph
+
+    @staticmethod
+    def _compute_graph_metrics(graph):
+        # Check if the graph is connected and has enough nodes for eigenvector centrality
+        if nx.is_connected(graph) and graph.number_of_nodes() > 2:
+            try:
+                eigenvector_centrality = mean(nx.eigenvector_centrality_numpy(graph).values())
+            except Exception:
+                eigenvector_centrality = np.nan  # Handle exceptions gracefully
+        else:
+            eigenvector_centrality = np.nan  # Assign NaN if the graph is disconnected or too small
+
+        metrics = {
+            'sequence': graph.graph['sequence'],
+            'distance_function': graph.graph['distance_function'],
+            'distance_min': graph.graph['distance_min'],
+            'distance_max': graph.graph['distance_max'],
+            'number_of_nodes': graph.number_of_nodes(),
+            'number_of_edges': graph.number_of_edges(),
+            'density': nx.density(graph),
+            'degree_centrality': mean(nx.degree_centrality(graph).values()) if graph.number_of_nodes() > 1 else np.nan,
+            'eigenvector_centrality': eigenvector_centrality,
+            'closeness_centrality': mean(
+                nx.closeness_centrality(graph).values()) if graph.number_of_nodes() > 1 else np.nan,
+            'betweenness_centrality': mean(
+                nx.betweenness_centrality(graph).values()) if graph.number_of_nodes() > 1 else np.nan,
+            'harmonic_centrality': mean(
+                nx.harmonic_centrality(graph).values()) if graph.number_of_nodes() > 1 else np.nan
+        }
+        return metrics

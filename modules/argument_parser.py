@@ -33,7 +33,7 @@ class CommonArguments(BaseModel):
     @root_validator
     def validator(cls, values):
         # output paths
-        values['output_paths'] = cls.output_paths(**values)
+        values['output_paths'] = cls._output_paths(**values)
 
         # distance function
         values['distance_functions'] = ['euclidean', 'canberra', 'lance_williams', 'clark', 'soergel', 'bhattacharyya',
@@ -41,7 +41,7 @@ class CommonArguments(BaseModel):
 
         return values
 
-    def output_paths(**kwargs):
+    def _output_paths(**kwargs):
         output_path = kwargs.get('output_path')
         mode = kwargs.get('mode')
         mode_path_name = kwargs.get('mode_path_name')
@@ -126,15 +126,15 @@ class GraphAnalyzerArguments(CommonArguments):
     mode: str = Field("graph_analyzer", const=True)
     mode_path_name: str = Field("Graph_Analyzer", const=True)
 
-    distance_intervals_json_path: Optional[DirectoryPath] = Field(
+    distance_intervals_json: FilePath = Field(
         description="Path to json file with distance intervals"
     )
 
     @root_validator
     def validator(cls, values):
-        super(GraphAnalyzerArguments, cls).validator(values)
+        super(GraphAnalyzerArguments, cls).validator(values)        
+        
         return values
-
 
 class SequenceAnalyzerArguments(CommonArguments):
     mode: str = Field("sequence_analyzer", const=True)

@@ -82,16 +82,8 @@
       "modes": ["graph_analyzer"],
       "files": [
         {
-          "key": "graph_density",
-          "name": "Graph-Density.csv"
-        },
-        {
-          "key": "graph_centralities",
-          "name": "Graph-Centralities.csv"
-        },
-        {
-          "key": "graph_eigen_values",
-          "name": "Graph-Eigen_Values.csv"
+          "key": "graph_metrics",
+          "name": "Graph-Metrics.csv"
         },
         {
           "key": "graph_similarities",

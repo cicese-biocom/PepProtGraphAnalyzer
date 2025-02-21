@@ -34,7 +34,3 @@ def get_distance_intervals(distance_intervals_json_path):
 
     return intervals_list
 
-
-def get_distance_threshold(distance_threshold_json_path):
-    distance_threshold_json = load_json(distance_threshold_json_path)
-    return distance_threshold_json["distance_thresholds"]
