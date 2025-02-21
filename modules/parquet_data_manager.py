@@ -379,12 +379,7 @@ class DataAnalysisManager(DataManager):
         with ProgressBar():
             computed_metrics = dask.compute(*tasks)
 
-        metrics_dicts = []
-        for metric in computed_metrics:
-            for metric_dict in metric.values:
-                metrics_dicts.append(metric_dict)
-
-        return pd.DataFrame(metrics_dicts)
+        return pd.DataFrame([metric_dict for metric in computed_metrics for metric_dict in metric.values])
 
     def get_distances(self, distance_function, interval, sequence_ids):
         distances = self._distances_manager_temp.read_parquet(
