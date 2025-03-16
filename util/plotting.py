@@ -8,7 +8,8 @@ FONT = 'Liberation Serif'
 
 # histogram
 def histogram(data, x_labels, y_label, bin_width=None, x_axis_step=None, x_axis_max=None, output=None, fig_size=(6, 4),
-              x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8, y_ticks_fontsize=8, n_rows=None, n_cols=None, titles=None):
+              x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8, y_ticks_fontsize=8, n_rows=None,
+              n_cols=None, titles=None, title_pad=None, y_sci_limits=None):
     plt.rcParams['font.family'] = FONT
 
     if isinstance(data, pd.Series):
@@ -55,16 +56,17 @@ def histogram(data, x_labels, y_label, bin_width=None, x_axis_step=None, x_axis_
             axs[i].xaxis.set_ticks(np.arange(0, x_max + 0.01, x_axis_step[i]))
 
         axs[i].grid(False)
-        axs[i].spines['top'].set_visible(False)
-        axs[i].spines['right'].set_visible(False)
+        axs[i].spines['top'].set_linewidth(0.5)
+        axs[i].spines['right'].set_linewidth(0.5)
         axs[i].spines['left'].set_linewidth(0.5)
         axs[i].spines['bottom'].set_linewidth(0.5)
 
         # Add title to the right if provided
         if titles is not None and len(titles) == num_subplots:
-            axs[i].set_title(titles[i], loc='right', fontsize=x_label_fontsize)
+            axs[i].set_title(titles[i], loc='right', fontsize=x_label_fontsize, pad=title_pad)
 
-    axs[0].set_ylabel(y_label, fontsize=y_label_fontsize, labelpad=15)
+        axs[i].ticklabel_format(axis='y', style='sci', scilimits=(y_sci_limits, y_sci_limits))
+        axs[i].set_ylabel(y_label, fontsize=y_label_fontsize, labelpad=15)
 
     for j in range(num_subplots, len(axs)):
         axs[j].axis('off')
@@ -79,7 +81,8 @@ def histogram(data, x_labels, y_label, bin_width=None, x_axis_step=None, x_axis_
 
 # boxplot
 def boxplot(data, x_axis, y_axis, x_label, y_label, x_ticks=None, y_lim=None, categories=None,
-            output=None, fig_size=(6, 4), x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8, y_ticks_fontsize=8):
+            output=None, fig_size=(6, 4), x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8,
+            y_ticks_fontsize=8, title=None, title_pad=None):
     plt.rcParams['font.family'] = FONT
 
     # Convert x_axis to string type
@@ -115,6 +118,9 @@ def boxplot(data, x_axis, y_axis, x_label, y_label, x_ticks=None, y_lim=None, ca
 
     for flier in box['fliers']:
         flier.set(marker='+', color='#ff0000', markersize=5, alpha=1)
+
+    if title is not None:
+        plt.title(title, loc='right', fontsize=x_label_fontsize, pad=title_pad)
 
     # Customize x-tick labels
     if x_ticks is None:
