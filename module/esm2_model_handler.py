@@ -7,7 +7,7 @@ import esm
 from esm import FastaBatchedDataset
 import os
 from tqdm import tqdm
-from utils import json_parser
+from util import json_parser
 
 
 def get_models(esm2_representation):
@@ -18,8 +18,12 @@ def get_models(esm2_representation):
         models: models corresponding to the specified esm 2 representation
     """
 
-    esm2_representations_json = Path.cwd().joinpath("settings", "esm2_representations.json")
-    data = json_parser.load_json(esm2_representations_json)
+    settings_file = os.getenv("ESM_REPRESENTATIONS_PATH")
+
+    if not settings_file:
+        raise ValueError("Missing 'ESM_REPRESENTATIONS_PATH' environment variable in the .env file.")
+
+    data = json_parser.load_json(settings_file)
 
     # Create a DataFrame
     representations = pd.DataFrame(data["representations"])
@@ -50,7 +54,7 @@ def get_representations(data, model_name):
     """
     try:
         # esm2 checkpoints
-        hub.set_dir(os.getcwd() + os.sep + "modules/")
+        hub.set_dir(os.getcwd() + os.sep + "module/")
 
         no_gpu = False
         model, alphabet = esm.pretrained.load_model_and_alphabet_hub(model_name)

@@ -1,6 +1,7 @@
 import logging
-from modules.argument_parser import argument_parser
-from modules.pipeline import GraphAnalyzerPipeline
+import time
+from module.argument_parser import argument_parser
+from module.pipeline import GraphAnalyzerPipeline
 
 
 def main():
@@ -11,7 +12,11 @@ def main():
 
 if __name__ == '__main__':
     try:
+        start_time = time.time()
         main()
+        final_time = time.time()
+        logging.getLogger('logger').info(
+            f"Graph analyzer execution time in: {str(final_time - start_time)} seconds")
 
     except Exception as e:
         print(e)

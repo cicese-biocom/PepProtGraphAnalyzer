@@ -5,11 +5,11 @@ import os
 import argparse
 import pandas as pd
 from tqdm import tqdm
-from utils import pdb_parser
+from util import pdb_parser
 
 
 def predict_structures(data):
-    hub.set_dir(os.getcwd() + os.sep + "modules/")
+    hub.set_dir(os.getcwd() + os.sep + "module/")
     model = esm.pretrained.esmfold_v1()
     model = model.eval().cuda()
 

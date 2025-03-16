@@ -1,7 +1,7 @@
 import logging
 import time
-from modules.argument_parser import argument_parser
-from modules.pipeline import DataIngestionPipeline
+from module.argument_parser import argument_parser
+from module.pipeline import DataIngestionPipeline
 
 
 def main():
@@ -16,7 +16,7 @@ if __name__ == '__main__':
         main()
         final_time = time.time()
         logging.getLogger('logger').info(
-            f"Inference execution time in: {str(final_time - start_time)} seconds")
+            f"Ingestion data execution time in: {str(final_time - start_time)} seconds")
 
     except Exception as e:
         print(e)

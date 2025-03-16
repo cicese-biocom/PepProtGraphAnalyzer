@@ -3,7 +3,7 @@
     {
       "key": "log_path",
       "name": "Logs",
-      "modes": ["data_ingestion", "sequence_analyzer", "graph_analyzer"],
+      "modes": ["data_ingestion", "sequence_analyzer", "graph_analyzer", "notebook"],
       "files": [
         {
           "key": "log_file",
@@ -71,8 +71,12 @@
           "name": "Sequence-Inter_Amino_Acid_Distances"
         },
         {
-          "key": "sequence_inter_amino_acid_distances_statistics",
-          "name": "Sequence_Inter_Amino_Acid_Distances-Statistics.csv"
+          "key": "sequence_inter_amino_acid_distances_summary",
+          "name": "Sequence_Inter_Amino_Acid_Distances-Summary.csv"
+        },
+        {
+          "key": "sequences_with_max_distance",
+          "name": "Sequences_With_Max_Distance.csv"
         }
       ]
     },
@@ -86,12 +90,28 @@
           "name": "Graph-Metrics.csv"
         },
         {
+          "key": "graph_metrics_summary",
+          "name": "Graph-Metrics-Summary"
+        },
+        {
+          "key": "empty_graph_summary",
+          "name": "Empty-Graph-Summary.csv"
+        },
+        {
           "key": "graph_similarities",
-          "name": "Graph-Similarities.csv"
+          "name": "Graph-Similarity.csv"
         },
         {
           "key": "graph_similarity_summary",
-          "name": "Graph-Similarity-Summary.csv"
+          "name": "Graph-Similarity-Summary"
+        },
+        {
+          "key": "random_graph_comparison",
+          "name": "Random-Graph-Comparison.csv"
+        },
+        {
+          "key": "random_graph_comparison_summary",
+          "name": "Random-Graph-Comparison-Summary"
         }
       ]
     }

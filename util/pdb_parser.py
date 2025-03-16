@@ -38,15 +38,3 @@ def get_atom_coordinates_from_pdb(pdb_str, atom_type='CA'):
 
     except Exception as e:
         raise ValueError(f"Error parsing the PDB structure: {e}")
-
-
-def _get_random_coordinates(atom_coordinates, coordinate_min, coordinate_max):
-    random_atom_coordinates = np.zeros(atom_coordinates.shape)
-    random_atom_coordinates[:, 0] = \
-        np.random.uniform(coordinate_min[0], coordinate_max[0], size=atom_coordinates.shape[0])
-    random_atom_coordinates[:, 1] = \
-        np.random.uniform(coordinate_min[1], coordinate_max[1], size=atom_coordinates.shape[0])
-    random_atom_coordinates[:, 2] = \
-        np.random.uniform(coordinate_min[2], coordinate_max[2], size=atom_coordinates.shape[0])
-
-    return random_atom_coordinates
