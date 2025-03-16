@@ -8,5 +8,5 @@ def calculate_direction(vector):
 
 
 # scalar a vector
-def scale_vector(vector, scalar):
+def scalar_vector(vector, scalar):
     return [component * scalar for component in vector]
