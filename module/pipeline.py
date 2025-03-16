@@ -142,18 +142,9 @@ class DataIngestionPipeline(Pipeline):
         return distances
 
     def _save_to_db(self, sequences, distances):
-        sequences = self._save_sequences_to_db(sequences)
-        distances = merge_data(sequences, distances)
-        self._save_distances_to_db(distances)
+        self._context.db_service.add_data_to_db(sequences, distances)
 
-    def _save_sequences_to_db(self, sequences):
-        data_new = self._context.db_service.add_sequences(sequences)
         logging.getLogger('logger').info("Successfully saved %d sequences to the database.", len(sequences))
-
-        return data_new
-
-    def _save_distances_to_db(self, distances):
-        self._context.db_service.add_distances(distances)
         logging.getLogger('logger').info("Successfully saved %d distances to the database.", len(distances))
 
 

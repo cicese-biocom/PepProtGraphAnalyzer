@@ -324,11 +324,18 @@ class IngestionService(DBService):
 
         return missing_sequences
 
-    def add_sequences(self, sequences):
-        return self._db_manager.sequence_repository.add(df=sequences)
+    def add_data_to_db(self, sequences, distances):
+        data_new = self._db_manager.sequence_repository.add(df=sequences)
 
-    def add_distances(self, distances):
-        self._db_manager.distance_repository.add(df=distances)
+        data_new = data_new[["sequence_id", "sequence"]]
+
+        # Merge DataFrames based on the 'sequence' column
+        merged_data = distances.merge(data_new, on="sequence", how="inner")
+
+        # Remove the 'sequence' column after merging
+        merged_data.drop(columns=['sequence'], inplace=True)
+
+        self._db_manager.distance_repository.add(df=merged_data)
 
 
 class AnalysisService(DBService):
