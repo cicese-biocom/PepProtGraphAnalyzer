@@ -16,27 +16,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-jupyter
+
     tmpfs:
-      - /home/jovyan/work/notebooks/utils
+      - /home/jovyan/work/algorithms4pepprotgraphs
+
     volumes:
-      - ./datasets:/home/jovyan/work/datasets
-      - ./data_parquet_starpep:/home/jovyan/work/data_parquet_starpep
-      - ./notebooks:/home/jovyan/work/notebooks
-      - ./output:/home/jovyan/work/output
-      - ./utils/pdb_parser.py:/home/jovyan/work/notebooks/utils/pdb_parser.py:ro
-      - ./utils/distances_database_manager.py:/home/jovyan/work/notebooks/utils/distances_database_manager.py:ro
-      - ./utils/plotting.py:/home/jovyan/work/notebooks/utils/plotting.py:ro
-      - ./utils/vector_operations.py:/home/jovyan/work/notebooks/utils/vector_operations.py:ro
+      - ./dataset:/home/jovyan/work/algorithms4pepprotgraphs/dataset:ro
+      - ./db:/home/jovyan/work/algorithms4pepprotgraphs/db:ro
+      - ./module:/home/jovyan/work/algorithms4pepprotgraphs/module/:ro
+      - ./output:/home/jovyan/work/algorithms4pepprotgraphs/output:ro
+      - ./setting:/home/jovyan/work/algorithms4pepprotgraphs/setting:ro
+      - ./util:/home/jovyan/work/algorithms4pepprotgraphs/util:ro
+      - ./.env.jupyter:/home/jovyan/work/algorithms4pepprotgraphs/.env.jupyter
+      - ./notebook:/home/jovyan/work/
+
     ports:
       - 8888:8888
     container_name: jupyter
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/jupyter"
     depends_on:
       - algorithms4pepprotgraphs-env
-
-volumes:
-  datasets:
-  data:
-  notebooks:
-  output:
-  utils:

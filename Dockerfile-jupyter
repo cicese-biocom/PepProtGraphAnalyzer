@@ -1,4 +1,4 @@
-FROM jupyter/r-notebook
+FROM jupyter/r-notebook:python-3.9.12
 
 COPY ./environment-jupyter.yml /home/jovyan/environment-jupyter.yml
 

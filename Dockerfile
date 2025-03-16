@@ -46,6 +46,9 @@ RUN conda env update --file environment.yml --name base && \
     conda clean -afy && \
     conda init bash
 
+RUN python -m pip install "dask[distributed]"
+RUN python -m pip install "python-dotenv"
+
 # Set up the working directory
 WORKDIR /opt/project
 
