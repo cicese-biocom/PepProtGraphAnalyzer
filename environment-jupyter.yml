@@ -4,12 +4,24 @@ channels:
   - nodefaults
 
 dependencies:
-  - conda-forge::matplotlib=3.10.0
-  - conda-forge::python=3.11.6
-  - conda-forge::pandas=2.2.0
-  - conda-forge::numpy=1.24.4
-  - conda-forge::tqdm=4.66.2
-  - conda-forge::dask
-  - conda-forge::pyarrow
-  - conda-forge::biopython
-
+  - python=3.9
+  - numpy<2.0
+  - pip
+  - pip:
+      - pandas
+      - tqdm
+      - PyYAML
+      - networkx
+      - matplotlib
+      - typing
+      - typing_extensions
+      - biopython
+      - pydantic-argparse
+      - pydantic-computed
+      - injector
+      - pyarrow
+      - dask
+      - dask[dataframe]
+      - scipy
+      - python-dotenv
+      - ipywidgets
