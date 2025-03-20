@@ -58,4 +58,18 @@ class DistanceContext:
         return self._strategy.compute(point1, point2)
 
 
+def compute_distance(sequence, atom_coordinates, distance_strategies):
+    number_of_amino_acid = len(atom_coordinates)
 
+    distances = []
+
+    for i in range(number_of_amino_acid):
+        for j in range(i + 1, number_of_amino_acid):
+            distance_values = [
+                strategy.compute(atom_coordinates[i], atom_coordinates[j])
+                for strategy in distance_strategies
+            ]
+
+            distances.append((sequence, i, j, *distance_values))
+
+    return distances
