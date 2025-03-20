@@ -2,11 +2,11 @@ import logging
 import multiprocessing
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor
-from pathlib import Path
 import numpy as np
 import pandas as pd
-from dotenv import load_dotenv
 from tqdm import tqdm
+
+from module.distance import compute_distance
 from module.esm2_model_handler import get_representations, get_models
 from module.application_context import ApplicationContext
 from module.argument_parser import TertiaryStructurePredictionMethod
@@ -128,7 +128,7 @@ class DataIngestionPipeline(Pipeline):
             with ProcessPoolExecutor(max_workers=num_cores) as pool:
                 futures = []
                 for arg in args:
-                    future = pool.submit(_compute_distance, *arg)
+                    future = pool.submit(compute_distance, *arg)
                     future.add_done_callback(lambda p: progress.update())
                     futures.append(future)
 
@@ -146,35 +146,6 @@ class DataIngestionPipeline(Pipeline):
 
         logging.getLogger('logger').info("Successfully saved %d sequences to the database.", len(sequences))
         logging.getLogger('logger').info("Successfully saved %d distances to the database.", len(distances))
-
-
-def _compute_distance(sequence, atom_coordinates, distance_strategies):
-    number_of_amino_acid = len(atom_coordinates)
-
-    distances = []
-
-    for i in range(number_of_amino_acid):
-        for j in range(i + 1, number_of_amino_acid):
-            distance_values = [
-                strategy.compute(atom_coordinates[i], atom_coordinates[j])
-                for strategy in distance_strategies
-            ]
-
-            distances.append((sequence, i, j, *distance_values))
-
-    return distances
-
-
-def merge_data(sequences: pd.DataFrame, distances: pd.DataFrame) -> pd.DataFrame:
-    sequences = sequences[["sequence_id", "sequence"]]
-
-    # Merge DataFrames based on the 'sequence' column
-    merged_data = distances.merge(sequences, on="sequence", how="inner")
-
-    # Remove the 'sequence' column after merging
-    merged_data.drop(columns=['sequence'], inplace=True)
-
-    return merged_data
 
 
 class SequenceAnalyzerPipeline(Pipeline):
