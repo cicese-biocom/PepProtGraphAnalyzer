@@ -27,7 +27,8 @@ services:
       - ./output:/home/jovyan/work/algorithms4pepprotgraphs/output:ro
       - ./setting:/home/jovyan/work/algorithms4pepprotgraphs/setting:ro
       - ./util:/home/jovyan/work/algorithms4pepprotgraphs/util:ro
-      - ./.env.jupyter:/home/jovyan/work/algorithms4pepprotgraphs/.env.jupyter
+      - ./example:/home/jovyan/work/algorithms4pepprotgraphs/example:ro
+      - ./.env.jupyter.StarPep:/home/jovyan/work/algorithms4pepprotgraphs/.env.jupyter.StarPep
       - ./notebook:/home/jovyan/work/
 
     ports:
