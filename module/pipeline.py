@@ -173,7 +173,7 @@ class SequenceAnalyzerPipeline(Pipeline):
     def _get_sequence_perplexities(self):
         perplexities = self._context.db_service.get_sequence_perplexities()
 
-        file_path = self._parameters.output_paths['sequence_perplexities']
+        file_path = self._parameters.output_paths['sequence_perplexity']
         perplexities.to_csv(file_path, index=False)
 
         logging.getLogger('logger').info(f"Perplexities successfully recovered. See: {file_path}")
@@ -196,7 +196,8 @@ class SequenceAnalyzerPipeline(Pipeline):
         amino_acid_composition.to_csv(file_path, index=False)
 
         logging.getLogger('logger').info(
-            f"The amino acid composition has been successfully calculated. See: {file_path}")
+            f"The amino acid composition has been successfully calculated. See: {file_path}"
+        )
 
     def _get_inter_amino_acid_distance_summary(self):
         summary = self._context.db_service.get_distance_stats(
@@ -222,16 +223,16 @@ class GraphAnalyzerPipeline(Pipeline):
         self._compute_empty_graph_summary(metrics)
 
         # Step 4: Compute graph similarity
-        similarities = self._compute_graph_similarity()
+        similarities = self._compute_similarity_between_graphs()
 
         # Step 5: Compute graph similarity summary
-        self._compute_graph_similarity_summary(similarities)
+        self._compute_similarity_between_graphs_summary(similarities)
 
         # Step 6: Compare with random graphs
-        comparison = self._compare_with_random_graphs()
+        comparison = self._compute_similarity_with_random_graphs()
 
         # Step 7: Compare with random graphs
-        self._compare_with_random_graphs_summary(comparison)
+        self._compute_similarity_with_random_graphs_summary(comparison)
 
     def _compute_graph_metrics(self):
         metrics = self._context.db_service.compute_graph_metrics()
@@ -244,10 +245,10 @@ class GraphAnalyzerPipeline(Pipeline):
 
         return metrics
 
-    def _compute_graph_similarity(self):
+    def _compute_similarity_between_graphs(self):
         similarities = self._context.db_service.compute_graph_similarity()
 
-        file_path = self._parameters.output_paths['graph_similarities']
+        file_path = self._parameters.output_paths['graph_similarity']
         similarities.to_csv(file_path, index=False)
 
         logging.getLogger('logger').info(
@@ -314,7 +315,7 @@ class GraphAnalyzerPipeline(Pipeline):
             logging.getLogger('logger').info(
                 f"Empty graph summary successfully computed. See: {file_path}")
 
-    def _compute_graph_similarity_summary(self, similarities):
+    def _compute_similarity_between_graphs_summary(self, similarities):
         index_columns = ["distance_function_1", "interval_1", "distance_function_2", "interval_2"]
 
         file_path = self._parameters.output_paths['graph_similarity_summary']
@@ -347,7 +348,7 @@ class GraphAnalyzerPipeline(Pipeline):
         logging.getLogger('logger').info(
             f"Graph similarity summary successfully computed. See: {file_path}")
 
-    def _compare_with_random_graphs(self):
+    def _compute_similarity_with_random_graphs(self):
         comparison = self._context.db_service.compare_with_random_graphs()
 
         comparison["random_graph"] = comparison.groupby(["sequence", "distance_function_2", "interval_2"]).cumcount()+1
@@ -357,7 +358,7 @@ class GraphAnalyzerPipeline(Pipeline):
         comparison.rename(columns={"interval_1": "interval"}, inplace=True)
         comparison = comparison[['sequence', 'distance_function', 'interval', 'random_graph', *self._parameters.random_graph_sim_funcs]]
 
-        file_path = self._parameters.output_paths['random_graph_comparison']
+        file_path = self._parameters.output_paths['similarity_with_random_graphs']
         comparison.to_csv(file_path, index=False)
 
         logging.getLogger('logger').info(
@@ -365,10 +366,10 @@ class GraphAnalyzerPipeline(Pipeline):
 
         return comparison
 
-    def _compare_with_random_graphs_summary(self, comparison):
+    def _compute_similarity_with_random_graphs_summary(self, comparison):
         index_columns = ["distance_function", "interval"]
 
-        file_path = self._parameters.output_paths['random_graph_comparison_summary']
+        file_path = self._parameters.output_paths['similarity_with_random_graphs_summary']
 
         for col in tqdm(self._parameters.random_graph_sim_funcs,
                         total=len(self._parameters.random_graph_sim_funcs),
