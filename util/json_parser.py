@@ -44,14 +44,20 @@ def output_config(**kwargs):
 
     # create output path
     current_time = datetime.now().replace(microsecond=0).isoformat().replace(':', '.')
-    output_path = output_path.joinpath(f"{current_time}-{mode_path_name}")
-    output_path.mkdir(parents=True)
+
+    if not mode_path_name:
+        output_path = output_path.joinpath(f"{current_time}")
+    elif mode != 'notebook':
+        output_path = output_path.joinpath(f"{current_time}-{mode_path_name}")
+
+    output_path.mkdir(parents=True, exist_ok=True)
 
     # load output path setting
-    settings_file = os.getenv("OUTPUT_CONFIG_PATH")
+    base_path = os.getenv("FRAMEWORK_PATH")
+    settings_file = os.path.join(base_path, "setting/output_config.json")
 
     if not settings_file:
-        raise ValueError("Missing 'OUTPUT_CONFIG_PATH' environment variable in the .env file.")
+        raise ValueError("Missing 'FRAMEWORK_PATH' environment variable in the .env file.")
 
     settings_file = Path(settings_file).resolve()
 
@@ -63,6 +69,28 @@ def output_config(**kwargs):
         if mode in setting["modes"]:
             paths[setting["key"]] = output_path.joinpath(setting["name"])
             paths[setting["key"]].mkdir(parents=True, exist_ok=True)
+
+            for file in setting.get("files", []):
+                paths[file["key"]] = paths[setting["key"]].joinpath(file["name"])
+    return paths
+
+
+def input_config(input_path, mode):
+    base_path = os.getenv("FRAMEWORK_PATH")
+    settings_file = os.path.join(base_path, "setting/output_config.json")
+
+    if not settings_file:
+        raise ValueError("Missing 'FRAMEWORK_PATH' environment variable in the .env file.")
+
+    settings_file = Path(settings_file).resolve()
+
+    data = load_json(settings_file)
+
+    # create output file paths
+    paths = {}
+    for setting in data["output_settings"]:
+        if setting["key"] != 'log_path':
+            paths[setting["key"]] = input_path.joinpath(setting["name"])
 
             for file in setting.get("files", []):
                 paths[file["key"]] = paths[setting["key"]].joinpath(file["name"])
