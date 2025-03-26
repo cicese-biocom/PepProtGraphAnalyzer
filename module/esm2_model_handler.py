@@ -17,11 +17,11 @@ def get_models(esm2_representation):
     :return:
         models: models corresponding to the specified esm 2 representation
     """
-
-    settings_file = os.getenv("ESM_REPRESENTATIONS_PATH")
+    base_path = os.getenv("FRAMEWORK_PATH")
+    settings_file = os.path.join(base_path, "setting/esm2_representations.json")
 
     if not settings_file:
-        raise ValueError("Missing 'ESM_REPRESENTATIONS_PATH' environment variable in the .env file.")
+        raise ValueError("Missing 'FRAMEWORK_PATH' environment variable in the .env file.")
 
     data = json_parser.load_json(settings_file)
 
