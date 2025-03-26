@@ -50,6 +50,8 @@ class DistanceBasedGraph:
             'number_of_nodes': self._nx_graph.number_of_nodes(),
             'number_of_edges': self._nx_graph.number_of_edges(),
             'density': nx.density(self._nx_graph),
+            'number_of_connected_components': nx.number_connected_components(self._nx_graph),
+            'diameter': nx.diameter(self._nx_graph) if nx.is_connected(self._nx_graph) else None,
             'degree_centrality': mean(
                 nx.degree_centrality(self._nx_graph).values()) if self._nx_graph.number_of_nodes() > 1 else np.nan,
             'eigenvector_centrality': eigenvector_centrality,
@@ -58,7 +60,7 @@ class DistanceBasedGraph:
             'betweenness_centrality': mean(
                 nx.betweenness_centrality(self._nx_graph).values()) if self._nx_graph.number_of_nodes() > 1 else np.nan,
             'harmonic_centrality': mean(
-                nx.harmonic_centrality(self._nx_graph).values()) if self._nx_graph.number_of_nodes() > 1 else np.nan
+                nx.harmonic_centrality(self._nx_graph).values()) if self._nx_graph.number_of_nodes() > 1 else np.nan,
         }
 
     def get_eigenvalues(self):
