@@ -245,19 +245,26 @@ class DistanceRepository(BaseRepository):
 
         return None
 
-    def get_max_distance(self, distance_function):
+    def get_sequences_with_largest_distance(self, distance_function):
         if self._manager.empty:
             return None
 
-        df = self.read().compute()
+        # Get the maximum value of the specified distance function column
+        max_value = self.read(columns=[distance_function]).compute().max().item()
 
-        max_value = df[distance_function].max()
+        # Retrieve all rows where the distance function value matches the maximum
+        return self.read(
+            filters=[(distance_function, "==", max_value)],
+            partition_size=100,
+            persist=True
+        ).compute()
 
-        return df[df[distance_function] == max_value]
-
-    def get_all(self, attr):
+    def get_all(self, attr, filters=None, partition_size=None, persist=None):
         return self.read(
             columns=attr,
+            filters=filters,
+            partition_size=partition_size,
+            persist=persist
         )
 
 
@@ -548,7 +555,8 @@ class GraphAnalysisService(AnalysisService):
     def _compute_empty_graph_metrics(self, sequences, computed_metrics):
         all_combinations = set(
             (sequence, interval["distance_function"], interval["interval"])
-            for sequence, interval in itertools.product(sequences["sequence"].tolist(), self._db_manager.kwargs.get('distance_intervals'))
+            for sequence, interval in
+            itertools.product(sequences["sequence"].tolist(), self._db_manager.kwargs.get('distance_intervals'))
         )
 
         existing_combinations = set(
@@ -605,14 +613,15 @@ class GraphAnalysisService(AnalysisService):
 
     def _compare(self, sequence_value, distances, distance_function, interval):
         graph = DistanceBasedGraph(
-                sequence_value=sequence_value,
-                distances=distances,
-                distance_function=distance_function,
-                interval=interval
+            sequence_value=sequence_value,
+            distances=distances,
+            distance_function=distance_function,
+            interval=interval
         )
         erdos_renyi_graphs = graph.get_erdos_renyi_graph()
 
-        updated_kwargs = {**self._db_manager.kwargs, "graph_similarity_functions": self._db_manager.kwargs.get('random_graph_sim_funcs')}
+        updated_kwargs = {**self._db_manager.kwargs,
+                          "graph_similarity_functions": self._db_manager.kwargs.get('random_graph_sim_funcs')}
 
         return [
             GraphSimilarityContext().compute(
@@ -628,8 +637,8 @@ class NotebookDBService(AnalysisService):
     def __init__(self, **kwargs):
         super(NotebookDBService, self).__init__(**kwargs)
 
-    def get_sequences_with_max_distance(self, distance_function):
-        max_distance = self._db_manager.distance_repository.get_max_distance(distance_function)
+    def get_sequences_with_largest_distance(self, distance_function):
+        max_distance = self._db_manager.distance_repository.get_sequences_with_largest_distance(distance_function)
 
         if max_distance is None or max_distance.empty:
             return None
@@ -641,16 +650,29 @@ class NotebookDBService(AnalysisService):
         return max_distance.merge(sequence_with_max_distance, on="sequence_id", how="left")
 
     def get_distance_values(self, distance_functions):
-        self._db_manager.distance_repository.get_all(attr=distance_functions).compute()
+        return self._db_manager.distance_repository.get_all(
+            attr=distance_functions,
+            partition_size=100,
+            persist=True
+        ).compute()
 
-    def get_distance_values_and_pivot(self, distance_functions):
-        data = self._db_manager.distance_repository.get_all(attr=distance_functions).compute()
+    def get_distance_values_and_pivot(self, distance_functions, sequence=None):
+        filter = None
+        if sequence:
+            sequence_data = self._db_manager.sequence_repository.get_by_value(sequence_values=[sequence]).compute()
+            filter = [('sequence_id', '==', sequence_data['sequence_id'].item())]
+
+        data = self._db_manager.distance_repository.get_all(
+            attr=distance_functions,
+            filters=filter,
+            partition_size=100,
+            persist=True
+        )
+
         data = data.melt(var_name="distance_function", value_name="value")
 
         chunks = [chunk.compute() for chunk in data.to_delayed()]
         return pd.concat(chunks, ignore_index=True)
-
-        return result
 
 
 class DBServiceContext:
@@ -674,7 +696,8 @@ def data_repartition(data, partition_size):
 
 
 def _get_db_path():
-    config_path = os.getenv("DB_PARQUET_PATH")
+    base_path = os.getenv("FRAMEWORK_PATH")
+    config_path = os.path.join(base_path, "db")
 
     if not config_path:
         raise ValueError("Missing 'PARQUET_PATH' environment variable in the .env file.")
