@@ -39,15 +39,10 @@ RUN wget -P /tmp \
     && rm /tmp/Miniconda3-py39_23.9.0-0-Linux-x86_64.sh
 ENV PATH /opt/conda/bin:$PATH
 
-# COPY ./misc/nx_arangodb-1.1.0-py3-none-any.whl /misc/nx_arangodb-1.1.0-py3-none-any.whl
-
 COPY environment.yml .
 RUN conda env update --file environment.yml --name base && \
     conda clean -afy && \
     conda init bash
-
-RUN python -m pip install "dask[distributed]"
-RUN python -m pip install "python-dotenv"
 
 # Set up the working directory
 WORKDIR /opt/project

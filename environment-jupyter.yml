@@ -27,3 +27,4 @@ dependencies:
       - ipywidgets
       - py3dmol
       - tabulate
+      - seaborn
