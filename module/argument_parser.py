@@ -1,7 +1,6 @@
 from enum import Enum, auto
-
 from dotenv import load_dotenv
-from pydantic import PositiveInt, PositiveFloat
+from pydantic import PositiveInt, PositiveFloat, ValidationError, confloat
 from pydantic.v1 import BaseModel, Field, root_validator, FilePath, DirectoryPath
 import pydantic_argparse
 from typing import Optional, Literal, List, Annotated
@@ -39,9 +38,26 @@ class CommonArguments(BaseModel):
     output_path: DirectoryPath = Field(
         description="The path to save the outputs"
     )
+    
+    min_sequence_len: Optional[PositiveInt] = Field(
+        default=None,
+        description="Minimum sequence length."
+    )
+
+    max_sequence_len: Optional[PositiveInt] = Field(
+        default=None,
+        description="Maximum sequence length."
+    )
 
     @root_validator
     def validator(cls, values):
+        # sequence_len
+        min_len = values.get("min_sequence_len")
+        max_len = values.get("max_sequence_len")
+
+        if min_len is not None and max_len is not None and max_len <= min_len:
+            raise ValueError("max_sequence_len must be greater than min_sequence_len.")
+
         # distance functions
         values['distance_functions'] = DISTANCE_FUNCTIONS
 
@@ -67,16 +83,6 @@ class DataIngestionArguments(CommonArguments):
 
     pdb_path: DirectoryPath = Field(
         description="Path where tertiary structures are saved in or loaded from PDB files."
-    )
-
-    minimum_sequence_length: Optional[int] = Field(
-        default=None,
-        description="Minimum sequence length."
-    )
-
-    maximum_sequence_length: Optional[int] = Field(
-        default=None,
-        description="Maximum sequence length."
     )
 
     amino_acid_representation: Optional[Literal['CA']] = Field(
@@ -129,9 +135,19 @@ class GraphAnalyzerArguments(CommonArguments):
     ged_timeout: Annotated[Optional[PositiveFloat],
                            Field(description="Maximum number of seconds to execute. After timeout is met, the current best GED is returned.")]
 
-    batch_size: Optional[int] = Field(
+    batch_size: Optional[PositiveInt] = Field(
         default=512,
         description="Batch size"
+    )
+
+    number_of_random_graphs: Optional[PositiveInt] = Field(
+        default=10,
+        description="Number of random graphs to be generated"
+    )
+
+    probability_edge_creation: Optional[confloat(gt=0.0, le=1.0)] = Field(
+        default=0.5,
+        description="Probability for edge creation of random graphs (must be in the range (0,1])."
     )
 
     @root_validator
