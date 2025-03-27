@@ -36,6 +36,9 @@ class Pipeline(ABC):
         # Step 3: Validate input data
         data = self.validate_data(data)
 
+        # Step 4: Filter sequences by length
+        data = self.filter_sequences_by_length(data)
+
         # Step 4: Prepare database
         data = self.prepare_data(data)
 
@@ -59,6 +62,23 @@ class Pipeline(ABC):
         )
         return data
 
+    def filter_sequences_by_length(self, data: pd.DataFrame) -> pd.DataFrame:
+        data = data.assign(length=data['sequence'].str.len())
+
+        min_sequence_len = self._parameters.min_sequence_len
+        max_sequence_len = self._parameters.max_sequence_len
+
+        if min_sequence_len and max_sequence_len:
+            data = data[(data['length'] >= min_sequence_len) & (data['length'] <= max_sequence_len)]
+
+        if min_sequence_len:
+            data = data[data['length'] >= min_sequence_len]
+
+        if max_sequence_len:
+            data = data[data['length'] <= max_sequence_len]
+
+        return data
+
     def prepare_data(self, data):
         return self._context.db_service.prepare_data(data)
 
@@ -69,36 +89,14 @@ class Pipeline(ABC):
 
 class DataIngestionPipeline(Pipeline):
     def process_data(self, data: pd.DataFrame):
-        # Step 1: Calculate sequence lengths
-        sequences = self._compute_sequence_lengths(data)
-
         # Step 2: Calculate perplexities
-        sequences = self._compute_sequence_perplexities(sequences)
+        sequences = self._compute_sequence_perplexities(data)
 
         # Step 3: Calculate inter-amino acid distance
         distances = self._compute_inter_amino_acid_distance(sequences)
 
         # Step 4: Save sequences to parquet
         self._save_to_db(sequences, distances)
-
-    def _compute_sequence_lengths(self, data: pd.DataFrame):
-        data = data.assign(length=data['sequence'].str.len())
-
-        minimum_sequence_length = self._parameters.minimum_sequence_length
-        maximum_sequence_length = self._parameters.maximum_sequence_length
-
-        if minimum_sequence_length and maximum_sequence_length:
-            data = data[(data['length'] >= minimum_sequence_length) & (data['length'] <= maximum_sequence_length)]
-
-        if minimum_sequence_length:
-            data = data[data['length'] >= minimum_sequence_length]
-
-        if maximum_sequence_length:
-            data = data[data['length'] <= maximum_sequence_length]
-
-        logging.getLogger('logger').info(f"The sequence length calculation has been successfully completed.")
-
-        return data
 
     def _compute_sequence_perplexities(self, data: pd.DataFrame):
         if self._parameters.tertiary_structure_method == TertiaryStructurePredictionMethod.esmfold:
@@ -168,7 +166,7 @@ class SequenceAnalyzerPipeline(Pipeline):
         file_path = self._parameters.output_paths['sequence_length']
         sequence_lengths.to_csv(file_path, index=False)
 
-        logging.getLogger('logger').info(f"Sequence lengths successfully recovered. See: {file_path}")
+        logging.getLogger('logger').info(f"Sequence lengths successfully saved. See: {file_path}")
 
     def _get_sequence_perplexities(self):
         perplexities = self._context.db_service.get_sequence_perplexities()
@@ -176,7 +174,7 @@ class SequenceAnalyzerPipeline(Pipeline):
         file_path = self._parameters.output_paths['sequence_perplexity']
         perplexities.to_csv(file_path, index=False)
 
-        logging.getLogger('logger').info(f"Perplexities successfully recovered. See: {file_path}")
+        logging.getLogger('logger').info(f"Perplexities successfully saved. See: {file_path}")
 
     def _calculate_amino_acid_composition(self, data: pd.DataFrame):
         counts = np.zeros(len(AMINO_ACIDS), dtype=np.int64)
@@ -246,7 +244,7 @@ class GraphAnalyzerPipeline(Pipeline):
         return metrics
 
     def _compute_similarity_between_graphs(self):
-        similarities = self._context.db_service.compute_graph_similarity()
+        similarities = self._context.db_service.compute_similarity_between_graphs()
 
         file_path = self._parameters.output_paths['graph_similarity']
         similarities.to_csv(file_path, index=False)
@@ -349,7 +347,7 @@ class GraphAnalyzerPipeline(Pipeline):
             f"Graph similarity summary successfully computed. See: {file_path}")
 
     def _compute_similarity_with_random_graphs(self):
-        comparison = self._context.db_service.compare_with_random_graphs()
+        comparison = self._context.db_service.compute_similarity_with_random_graphs()
 
         comparison["random_graph"] = comparison.groupby(["sequence", "distance_function_2", "interval_2"]).cumcount()+1
         comparison.drop(columns=["distance_function_2", "interval_2"], inplace=True)
