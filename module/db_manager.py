@@ -424,7 +424,7 @@ class GraphAnalysisService(AnalysisService):
 
         total_tasks = len(sequences) * len(self._db_manager.kwargs.get('distance_intervals'))
 
-        with tqdm(total=total_tasks, desc="Creating graph metrics computation tasks") as progress:
+        with tqdm(total=total_tasks, desc="Creating graph metrics calculation tasks") as progress:
             tasks = []
             for sequence_batch, distance_interval in sequence_distance_pairs:
                 distance_function = distance_interval['distance_function']
@@ -453,7 +453,7 @@ class GraphAnalysisService(AnalysisService):
 
         # Executing task
         with dask.config.set(scheduler='processes', num_workers=multiprocessing.cpu_count()):
-            with TqdmCallback(desc="Executing non-empty graph metrics computation tasks"):
+            with TqdmCallback(desc="Executing non-empty graph metrics calculation  tasks"):
                 computed_metrics = dask.compute(*tasks)
 
         # not empty graph metrics
@@ -465,9 +465,14 @@ class GraphAnalysisService(AnalysisService):
         if len(not_empty_graph_metrics) != total_tasks:
             empty_graph_metrics = self._compute_empty_graph_metrics(sequences, computed_metrics)
 
-        return pd.concat([not_empty_graph_metrics, empty_graph_metrics])
+        valid_dfs = [df for df in [not_empty_graph_metrics, empty_graph_metrics] if not df.empty and not df.isna().all().all()]
 
-    def compute_graph_similarity(self):
+        if not valid_dfs:
+            return pd.DataFrame()
+
+        return pd.concat(valid_dfs, ignore_index=True)
+
+    def compute_similarity_between_graphs(self):
         sequences = self._db_manager.sequence_repository.get_all(
             partition_size=100,
             persist=True,
@@ -478,7 +483,7 @@ class GraphAnalysisService(AnalysisService):
 
         total_tasks = len(sequences)
 
-        with tqdm(total=total_tasks, desc="Creating graph similarity computation tasks") as progress:
+        with tqdm(total=total_tasks, desc="Creating similarity calculation tasks between graphs") as progress:
             tasks = []
             for sequence_batch in sequence_batches:
                 distances = self._db_manager.distance_repository.get_by_ids(
@@ -498,14 +503,14 @@ class GraphAnalysisService(AnalysisService):
                 progress.update(len(sequence_batch))
 
         with dask.config.set(scheduler='processes', num_workers=multiprocessing.cpu_count()):
-            with TqdmCallback(desc="Executing graph similarity computation tasks"):
+            with TqdmCallback(desc="Executing similarity calculation tasks between graphs"):
                 results = dask.compute(*tasks)
 
         results = list(itertools.chain(*results))
         results = [item for sublist in results for item in sublist]
         return pd.DataFrame(results)
 
-    def compare_with_random_graphs(self):
+    def compute_similarity_with_random_graphs(self):
         sequences = self._db_manager.sequence_repository.get_all(
             partition_size=100,
             persist=True,
@@ -517,7 +522,7 @@ class GraphAnalysisService(AnalysisService):
 
         total_tasks = len(sequences) * len(self._db_manager.kwargs.get('distance_intervals'))
 
-        with tqdm(total=total_tasks, desc="Creating comparison with random graph tasks") as progress:
+        with tqdm(total=total_tasks, desc="Creating similarity calculation tasks with random graphs") as progress:
             tasks = []
             for sequence_batch, distance_interval in sequence_distance_pairs:
                 distance_function = distance_interval['distance_function']
@@ -545,7 +550,7 @@ class GraphAnalysisService(AnalysisService):
                 progress.update(len(sequence_batch))
 
         with dask.config.set(scheduler='processes', num_workers=multiprocessing.cpu_count()):
-            with TqdmCallback(desc="Executing comparison with random graph tasks"):
+            with TqdmCallback(desc="Executing similarity calculation tasks with random graphs"):
                 results = dask.compute(*tasks)
 
         results = list(itertools.chain(*results))
@@ -568,7 +573,7 @@ class GraphAnalysisService(AnalysisService):
 
         empty_graph_metrics = []
         for sequence_value, distance_function, interval in tqdm(unmatched_sequences, total=len(unmatched_sequences),
-                                                                desc="Executing empty graph metrics computation tasks"):
+                                                                desc="Executing empty graph metrics calculation tasks"):
             empty_graph_metrics.append(
                 DistanceBasedGraph(
                     sequence_value=sequence_value,
@@ -618,7 +623,11 @@ class GraphAnalysisService(AnalysisService):
             distance_function=distance_function,
             interval=interval
         )
-        erdos_renyi_graphs = graph.get_erdos_renyi_graph()
+        erdos_renyi_graphs = graph.get_erdos_renyi_graph(
+            number_of_random_graphs=self._db_manager.kwargs.get('number_of_random_graphs'),
+            p=self._db_manager.kwargs.get('probability_edge_creation')
+
+        )
 
         updated_kwargs = {**self._db_manager.kwargs,
                           "graph_similarity_functions": self._db_manager.kwargs.get('random_graph_sim_funcs')}
