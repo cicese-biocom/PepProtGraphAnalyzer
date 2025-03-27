@@ -51,7 +51,7 @@ class DistanceBasedGraph:
             'number_of_edges': self._nx_graph.number_of_edges(),
             'density': nx.density(self._nx_graph),
             'number_of_connected_components': nx.number_connected_components(self._nx_graph),
-            'diameter': nx.diameter(self._nx_graph) if nx.is_connected(self._nx_graph) else None,
+            'diameter': nx.diameter(self._nx_graph) if nx.is_connected(self._nx_graph) else np.nan,
             'degree_centrality': mean(
                 nx.degree_centrality(self._nx_graph).values()) if self._nx_graph.number_of_nodes() > 1 else np.nan,
             'eigenvector_centrality': eigenvector_centrality,
@@ -69,7 +69,7 @@ class DistanceBasedGraph:
             return np.linalg.eigvals(adjacency_matrix)
         return np.array([])
 
-    def get_erdos_renyi_graph(self, number_of_random_graphs: int = 30, p: float = 0.5) -> List['DistanceBasedGraph']:
+    def get_erdos_renyi_graph(self, number_of_random_graphs: int = 10, p: float = 0.5) -> List['DistanceBasedGraph']:
         random_graphs = []
 
         metadata = self.get_metadata()
