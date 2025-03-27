@@ -1,10 +1,10 @@
 import logging
 import os
 from pathlib import Path
-
+from typing import Optional
 import pandas as pd
 from dotenv import load_dotenv
-from pydantic import BaseModel, FilePath, Field, root_validator, DirectoryPath
+from pydantic import BaseModel, FilePath, Field, root_validator, DirectoryPath, PositiveInt, ValidationError
 from module.application_context import ApplicationContext
 from module.logger_handler import LoggerHandler
 from util.json_parser import output_config, input_config
@@ -16,8 +16,25 @@ class NotebookArguments(BaseModel):
     dataset: FilePath = Field(description="Path to the input dataset in csv format.")
     output_path: DirectoryPath = Field(description="The path to save the outputs")
 
+    min_sequence_len: Optional[PositiveInt] = Field(
+        default=None,
+        description="Minimum sequence length."
+    )
+
+    max_sequence_len: Optional[PositiveInt] = Field(
+        default=None,
+        description="Maximum sequence length."
+    )
+
     @root_validator
     def validator(cls, values):
+        # sequence_len
+        min_len = values.get("min_sequence_len")
+        max_len = values.get("max_sequence_len")
+
+        if min_len is not None and max_len is not None and max_len <= min_len:
+            raise ValidationError("max_sequence_len must be greater than min_sequence_len.")
+
         # mode
         values['mode'] = "notebook"
         values['mode_path_name'] = "Notebook_Analysis"
@@ -46,6 +63,8 @@ class NotebookApp:
             'notebook_output_path': Path(os.getenv("NOTEBOOK_OUTPUT_PATH")).resolve(),
             'sequence_analysis_path': Path(os.getenv("SEQUENCE_ANALYSIS_PATH")).resolve(),
             'graph_analysis_path': Path(os.getenv("GRAPH_ANALYSIS_PATH")).resolve(),
+            'min_sequence_len': os.getenv("MIN_SEQUENCE_LEN"),
+            'max_sequence_len': os.getenv("MAX_SEQUENCE_LEN"),
         }
 
         logging.getLogger('logger').info(
@@ -59,9 +78,17 @@ class NotebookApp:
 
         dataset_path = Path(os.getenv("DATASET_PATH")).resolve()
         output_path = Path(os.getenv("NOTEBOOK_OUTPUT_PATH")).resolve()
-
         self._pdb_path = Path(os.getenv("PDB_PATH")).resolve()
-        self._config = NotebookArguments(dataset=dataset_path, output_path=output_path)
+        min_sequence_len = os.getenv("MIN_SEQUENCE_LEN")
+        max_sequence_len = os.getenv("MAX_SEQUENCE_LEN")
+
+        self._config = NotebookArguments(
+            dataset=dataset_path,
+            output_path=output_path,
+            min_sequence_len=min_sequence_len,
+            max_sequence_len=max_sequence_len
+        )
+
         self._context = ApplicationContext(**self._config.dict())
 
         self._sequence_analysis = input_config(
@@ -83,6 +110,10 @@ class NotebookApp:
         # Step 3: Validate input data
         data = self._validate_data(data)
 
+        # Step 4: Filter sequences by length
+        data = self._filter_sequences_by_length(data)
+
+        # Step 5: Prepare database
         self._data = self._prepare_data(data)
 
     @property
@@ -123,6 +154,23 @@ class NotebookApp:
             data=data,
             output_paths=self._config.output_paths
         )
+        return data
+
+    def _filter_sequences_by_length(self, data: pd.DataFrame) -> pd.DataFrame:
+        data = data.assign(length=data['sequence'].str.len())
+
+        min_sequence_len = self._config.min_sequence_len
+        max_sequence_len = self._config.max_sequence_len
+
+        if min_sequence_len and max_sequence_len:
+            data = data[(data['length'] >= min_sequence_len) & (data['length'] <= max_sequence_len)]
+
+        if min_sequence_len:
+            data = data[data['length'] >= min_sequence_len]
+
+        if max_sequence_len:
+            data = data[data['length'] <= max_sequence_len]
+
         return data
 
     def _prepare_data(self, data):
