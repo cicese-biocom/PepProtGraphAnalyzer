@@ -16,12 +16,12 @@ class NotebookArguments(BaseModel):
     dataset: FilePath = Field(description="Path to the input dataset in csv format.")
     output_path: DirectoryPath = Field(description="The path to save the outputs")
 
-    min_sequence_len: Optional[PositiveInt] = Field(
+    min_seq_len: Optional[PositiveInt] = Field(
         default=None,
         description="Minimum sequence length."
     )
 
-    max_sequence_len: Optional[PositiveInt] = Field(
+    max_seq_len: Optional[PositiveInt] = Field(
         default=None,
         description="Maximum sequence length."
     )
@@ -29,11 +29,11 @@ class NotebookArguments(BaseModel):
     @root_validator
     def validator(cls, values):
         # sequence_len
-        min_len = values.get("min_sequence_len")
-        max_len = values.get("max_sequence_len")
+        min_len = values.get("min_seq_len")
+        max_len = values.get("max_seq_len")
 
         if min_len is not None and max_len is not None and max_len <= min_len:
-            raise ValidationError("max_sequence_len must be greater than min_sequence_len.")
+            raise ValidationError("max_seq_len must be greater than min_seq_len.")
 
         # mode
         values['mode'] = "notebook"
@@ -63,8 +63,8 @@ class NotebookApp:
             'notebook_output_path': Path(os.getenv("NOTEBOOK_OUTPUT_PATH")).resolve(),
             'sequence_analysis_path': Path(os.getenv("SEQUENCE_ANALYSIS_PATH")).resolve(),
             'graph_analysis_path': Path(os.getenv("GRAPH_ANALYSIS_PATH")).resolve(),
-            'min_sequence_len': os.getenv("MIN_SEQUENCE_LEN"),
-            'max_sequence_len': os.getenv("MAX_SEQUENCE_LEN"),
+            'min_seq_len': os.getenv("min_seq_len"),
+            'max_seq_len': os.getenv("max_seq_len"),
         }
 
         logging.getLogger('logger').info(
@@ -79,14 +79,14 @@ class NotebookApp:
         dataset_path = Path(os.getenv("DATASET_PATH")).resolve()
         output_path = Path(os.getenv("NOTEBOOK_OUTPUT_PATH")).resolve()
         self._pdb_path = Path(os.getenv("PDB_PATH")).resolve()
-        min_sequence_len = os.getenv("MIN_SEQUENCE_LEN")
-        max_sequence_len = os.getenv("MAX_SEQUENCE_LEN")
+        min_seq_len = os.getenv("MIN_SEQ_LEN")
+        max_seq_len = os.getenv("MAX_SEQ_LEN")
 
         self._config = NotebookArguments(
             dataset=dataset_path,
             output_path=output_path,
-            min_sequence_len=min_sequence_len,
-            max_sequence_len=max_sequence_len
+            min_seq_len=min_seq_len,
+            max_seq_len=max_seq_len
         )
 
         self._context = ApplicationContext(**self._config.dict())
@@ -159,17 +159,17 @@ class NotebookApp:
     def _filter_sequences_by_length(self, data: pd.DataFrame) -> pd.DataFrame:
         data = data.assign(length=data['sequence'].str.len())
 
-        min_sequence_len = self._config.min_sequence_len
-        max_sequence_len = self._config.max_sequence_len
+        min_seq_len = self._config.min_seq_len
+        max_seq_len = self._config.max_seq_len
 
-        if min_sequence_len and max_sequence_len:
-            data = data[(data['length'] >= min_sequence_len) & (data['length'] <= max_sequence_len)]
+        if min_seq_len and max_seq_len:
+            data = data[(data['length'] >= min_seq_len) & (data['length'] <= max_seq_len)]
 
-        if min_sequence_len:
-            data = data[data['length'] >= min_sequence_len]
+        if min_seq_len:
+            data = data[data['length'] >= min_seq_len]
 
-        if max_sequence_len:
-            data = data[data['length'] <= max_sequence_len]
+        if max_seq_len:
+            data = data[data['length'] <= max_seq_len]
 
         return data
 
