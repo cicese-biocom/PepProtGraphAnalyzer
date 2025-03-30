@@ -65,17 +65,17 @@ class Pipeline(ABC):
     def filter_sequences_by_length(self, data: pd.DataFrame) -> pd.DataFrame:
         data = data.assign(length=data['sequence'].str.len())
 
-        min_sequence_len = self._parameters.min_sequence_len
-        max_sequence_len = self._parameters.max_sequence_len
+        min_seq_len = self._parameters.min_seq_len
+        max_seq_len = self._parameters.max_seq_len
 
-        if min_sequence_len and max_sequence_len:
-            data = data[(data['length'] >= min_sequence_len) & (data['length'] <= max_sequence_len)]
+        if min_seq_len and max_seq_len:
+            data = data[(data['length'] >= min_seq_len) & (data['length'] <= max_seq_len)]
 
-        if min_sequence_len:
-            data = data[data['length'] >= min_sequence_len]
+        if min_seq_len:
+            data = data[data['length'] >= min_seq_len]
 
-        if max_sequence_len:
-            data = data[data['length'] <= max_sequence_len]
+        if max_seq_len:
+            data = data[data['length'] <= max_seq_len]
 
         return data
 
