@@ -39,24 +39,29 @@ class CommonArguments(BaseModel):
         description="The path to save the outputs"
     )
     
-    min_sequence_len: Optional[PositiveInt] = Field(
+    min_seq_len: Optional[PositiveInt] = Field(
         default=None,
         description="Minimum sequence length."
     )
 
-    max_sequence_len: Optional[PositiveInt] = Field(
+    max_seq_len: Optional[PositiveInt] = Field(
         default=None,
         description="Maximum sequence length."
+    )
+    
+    batch_size: Optional[PositiveInt] = Field(
+        default=1000,
+        description="Batch size"
     )
 
     @root_validator
     def validator(cls, values):
         # sequence_len
-        min_len = values.get("min_sequence_len")
-        max_len = values.get("max_sequence_len")
+        min_len = values.get("min_seq_len")
+        max_len = values.get("max_seq_len")
 
         if min_len is not None and max_len is not None and max_len <= min_len:
-            raise ValueError("max_sequence_len must be greater than min_sequence_len.")
+            raise ValueError("max_seq_len must be greater than min_seq_len.")
 
         # distance functions
         values['distance_functions'] = DISTANCE_FUNCTIONS
@@ -88,11 +93,6 @@ class DataIngestionArguments(CommonArguments):
     amino_acid_representation: Optional[Literal['CA']] = Field(
         default='CA',
         description="Amino acid representations"
-    )
-
-    batch_size: Optional[int] = Field(
-        default=512,
-        description="Batch size"
     )
 
     @root_validator
@@ -128,17 +128,10 @@ class GraphAnalyzerArguments(CommonArguments):
         description="Path to json file with distance intervals"
     )
 
-    batch_size: Annotated[Optional[PositiveInt], Field(description='Batch size')] = 1000
-
     graph_similarity_functions: List[Literal['cosine_similarity', 'graph_edit_distance', 'optimize_graph_edit_distance']] = Field(description='Functions to calculate similarities')
 
     ged_timeout: Annotated[Optional[PositiveFloat],
                            Field(description="Maximum number of seconds to execute. After timeout is met, the current best GED is returned.")]
-
-    batch_size: Optional[PositiveInt] = Field(
-        default=512,
-        description="Batch size"
-    )
 
     number_of_random_graphs: Optional[PositiveInt] = Field(
         default=10,
@@ -178,11 +171,6 @@ class GraphAnalyzerArguments(CommonArguments):
 class SequenceAnalyzerArguments(CommonArguments):
     mode: str = Field("sequence_analyzer", const=True)
     mode_path_name: str = Field("Sequence_Analyzer", const=True)
-
-    batch_size: Optional[int] = Field(
-        default=512,
-        description="Batch size"
-    )
 
     @root_validator
     def validator(cls, values):
