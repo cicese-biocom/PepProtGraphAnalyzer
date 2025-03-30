@@ -4,8 +4,8 @@ dataset="datasets/StarPep/StarPep.csv"
 pdb_path="datasets/StarPep/ESMFold_pdbs/"
 tertiary_structure_method='esmfold'
 output_path='output/StarPep/PaperNew/'
-min_sequence_len=10
-max_sequence_len=100
+min_seq_len=10
+max_seq_len=100
 
 python data_ingestion.py \
     --dataset "$dataset" \
