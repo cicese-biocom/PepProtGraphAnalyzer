@@ -154,6 +154,9 @@ class SequenceRepository(BaseRepository):
         )
 
     def get_by_value(self, sequence_values, attr=None):
+        if self._manager.empty:
+            return None
+
         return self.read(
             columns=attr,
             filters=[
@@ -365,7 +368,7 @@ class AnalysisService(DBService):
             sequence_values
         )
 
-        if len(sequences_to_process) != len(existing_sequences):
+        if existing_sequences is None or (len(sequences_to_process) != len(existing_sequences)):
             logging.getLogger('logger').critical(
                 f"There are sequences for which data ingestion has not been performed.")
             raise Exception("There are sequences for which data ingestion has not been performed.")
