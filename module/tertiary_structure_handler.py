@@ -15,7 +15,7 @@ def get_atom_coordinates_matrices(data: pd.DataFrame, parameters: CommonArgument
         pdbs = _predict_tertiary_structure(data, parameters.pdb_path)
     else:
         # Load PDBs
-        pdbs = _load_tertiary_structure(data, parameters.pdb_path, parameters.output_paths['sequences_with_baseless_partitions_file'])
+        pdbs = _load_tertiary_structure(data, parameters.pdb_path, parameters.output_paths['non_pdb_bound_sequences_file'])
 
     # Get atom coordinate
     atom_coordinates_matrices = []
