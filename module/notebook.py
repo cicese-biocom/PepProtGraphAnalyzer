@@ -29,11 +29,11 @@ class NotebookArguments(BaseModel):
     @root_validator
     def validator(cls, values):
         # sequence_len
-        min_len = values.get("min_seq_len")
-        max_len = values.get("max_seq_len")
+        min_len = values.get("MIN_SEQ_LEN")
+        max_len = values.get("MAX_SEQ_LEN")
 
         if min_len is not None and max_len is not None and max_len <= min_len:
-            raise ValidationError("max_seq_len must be greater than min_seq_len.")
+            raise ValidationError("MAX_SEQ_LEN must be greater than MIN_SEQ_LEN.")
 
         # mode
         values['mode'] = "notebook"
@@ -63,8 +63,8 @@ class NotebookApp:
             'notebook_output_path': Path(os.getenv("NOTEBOOK_OUTPUT_PATH")).resolve(),
             'sequence_analysis_path': Path(os.getenv("SEQUENCE_ANALYSIS_PATH")).resolve(),
             'graph_analysis_path': Path(os.getenv("GRAPH_ANALYSIS_PATH")).resolve(),
-            'min_seq_len': os.getenv("min_seq_len"),
-            'max_seq_len': os.getenv("max_seq_len"),
+            'min_seq_len': os.getenv("MIN_SEQ_LEN"),
+            'max_seq_len': os.getenv("MAX_SEQ_LEN"),
         }
 
         logging.getLogger('logger').info(
