@@ -120,6 +120,12 @@
       "files": []
     },
     {
+      "key": "sequence_length_path",
+      "name": "Sequence_Length",
+      "modes": ["notebook"],
+      "files": []
+    },
+    {
       "key": "amino_acid_composition_path",
       "name": "Amino_Acid_Composition",
       "modes": ["notebook"],
