@@ -5,7 +5,7 @@
 
 # Algorithms for Peptide and Protein Graphs
 
-![Image](https://github.com/user-attachments/assets/0ded2336-aa8a-437a-acae-18b1132ba576)
+![Image](https://github.com/user-attachments/assets/42c346b6-035b-4236-91f1-0ca30ec83b63)
 
 ## **Installation**
 Clone the repository using Git:
