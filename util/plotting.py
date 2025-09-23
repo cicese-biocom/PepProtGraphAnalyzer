@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
 import seaborn as sns
+import matplotlib.ticker as ticker
 
 # Times New Roman equivalents:  Liberation Serif, Linux Libertine
 FONT = 'Liberation Serif'
@@ -91,12 +92,13 @@ def histogram(data, x_labels, y_label, bin_width=None, x_axis_step=None, x_axis_
 # boxplot
 def boxplot(data, x_axis, y_axis, x_label, y_label, x_ticks=None, y_lim=None, categories=None,
             output=None, fig_size=(6, 4), x_label_fontsize=10, y_label_fontsize=10, x_ticks_fontsize=8,
-            y_ticks_fontsize=8, title=None, title_pad=None, x_tick_rotation=None, show_fliers=True):
+            y_ticks_fontsize=8, title=None, title_pad=None, x_tick_rotation=None, show_fliers=True, y_step=None):
     plt.rcParams['font.family'] = FONT
 
     # Ensure x_axis column is treated as a string and then as a categorical dtype
     data[x_axis] = data[x_axis].astype(str)
     data[x_axis] = pd.Categorical(data[x_axis], categories=categories, ordered=True) if categories else pd.Categorical(data[x_axis])
+
 
     plt.figure(figsize=fig_size)
 
@@ -168,6 +170,11 @@ def boxplot(data, x_axis, y_axis, x_label, y_label, x_ticks=None, y_lim=None, ca
         # Ensure valid y-limits
         if ylim_min is not None and ylim_max is not None and ylim_min < ylim_max:
             plt.ylim(ylim_min, ylim_max)
+
+        if y_lim is not None and y_step is not None:
+            plt.ylim(y_lim)
+            ax = plt.gca()
+            ax.yaxis.set_major_locator(ticker.MultipleLocator(y_step))
 
     # Remove grid lines
     plt.grid(False)
@@ -281,14 +288,14 @@ def scatter(data, x_axis, x_label, y_label, output=None, fig_size=(6, 4),
     return plt
 
 
-def heatmap(data, output=None, fig_size=(10, 8), font_size=10, cmap="Blues"):
+def heatmap(data, output=None, fig_size=(10, 8), font_size=10, cmap="Blues", annot=False, rotation=90):
     plt.rcParams['font.family'] = FONT
 
     plt.figure(figsize=fig_size)
 
-    sns.heatmap(data, annot=True, fmt=".4f", cmap=cmap, linewidths=0.5, cbar=True)
+    sns.heatmap(data, annot=annot, fmt=".4f", cmap=cmap, linewidths=0.5, cbar=True)
 
-    plt.xticks(fontsize=font_size)
+    plt.xticks(rotation=rotation, fontsize=font_size)
     plt.yticks(fontsize=font_size)
 
     plt.tight_layout()
