@@ -1,8 +1,8 @@
 services:
-   algorithms4pepprotgraphs-env:
+   pepprotgraphanalyzer-env:
     build: .
     command: nvidia-smi
-    container_name: algorithms4pepprotgraphs-env
+    container_name: pepprotgraphanalyzer-env
     volumes:
       - .:/opt/project
     deploy:
@@ -18,16 +18,16 @@ services:
       dockerfile: Dockerfile-jupyter
 
     tmpfs:
-      - /home/jovyan/work/algorithms4pepprotgraphs
+      - /home/jovyan/work/PepProtGraphAnalyzer
 
     volumes:
-      - ./dataset:/home/jovyan/work/algorithms4pepprotgraphs/dataset:ro
-      - ./db:/home/jovyan/work/algorithms4pepprotgraphs/db:ro
-      - ./module:/home/jovyan/work/algorithms4pepprotgraphs/module/:ro
-      - ./output:/home/jovyan/work/algorithms4pepprotgraphs/output:ro
-      - ./setting:/home/jovyan/work/algorithms4pepprotgraphs/setting:ro
-      - ./util:/home/jovyan/work/algorithms4pepprotgraphs/util:ro
-      - ./example:/home/jovyan/work/algorithms4pepprotgraphs/example:ro
+      - ./dataset:/home/jovyan/work/PepProtGraphAnalyzer/dataset:ro
+      - ./db:/home/jovyan/work/PepProtGraphAnalyzer/db:ro
+      - ./module:/home/jovyan/work/PepProtGraphAnalyzer/module/:ro
+      - ./output:/home/jovyan/work/PepProtGraphAnalyzer/output:ro
+      - ./setting:/home/jovyan/work/PepProtGraphAnalyzer/setting:ro
+      - ./util:/home/jovyan/work/PepProtGraphAnalyzer/util:ro
+      - ./example:/home/jovyan/work/PepProtGraphAnalyzer/example:ro
       - ./notebook:/home/jovyan/work/
 
     ports:
@@ -35,4 +35,4 @@ services:
     container_name: jupyter
     command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/jupyter"
     depends_on:
-      - algorithms4pepprotgraphs-env
+      - pepprotgraphanalyzer-env
