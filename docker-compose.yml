@@ -1,13 +1,38 @@
-version: '3'
 services:
-  jupyter:
+   pepprotgraphanalyzer-env:
     build: .
+    command: nvidia-smi
+    container_name: pepprotgraphanalyzer-env
     volumes:
-      - ./database:/home/jovyan/work/database
-      - ./notebooks:/home/jovyan/work/notebooks
-      - ./output:/home/jovyan/work/output
-      - ./utils:/home/jovyan/work/utils
+      - .:/opt/project
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+   jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile-jupyter
+
+    tmpfs:
+      - /home/jovyan/work/PepProtGraphAnalyzer
+
+    volumes:
+      - ./dataset:/home/jovyan/work/PepProtGraphAnalyzer/dataset:ro
+      - ./db:/home/jovyan/work/PepProtGraphAnalyzer/db:ro
+      - ./module:/home/jovyan/work/PepProtGraphAnalyzer/module/:ro
+      - ./output:/home/jovyan/work/PepProtGraphAnalyzer/output:ro
+      - ./setting:/home/jovyan/work/PepProtGraphAnalyzer/setting:ro
+      - ./util:/home/jovyan/work/PepProtGraphAnalyzer/util:ro
+      - ./example:/home/jovyan/work/PepProtGraphAnalyzer/example:ro
+      - ./notebook:/home/jovyan/work/
+
     ports:
       - 8888:8888
-    container_name: algorithms4PepProtGraphs
-    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/Algorithms4PepProtGraphs"
+    container_name: jupyter
+    command: "start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/jupyter"
+    depends_on:
+      - pepprotgraphanalyzer-env

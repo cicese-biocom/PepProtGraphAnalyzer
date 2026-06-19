@@ -1,0 +1,8 @@
+FROM jupyter/r-notebook:python-3.9.12
+
+COPY ./environment-jupyter.yml /home/jovyan/environment-jupyter.yml
+
+RUN conda env update --file environment-jupyter.yml --name base &&  \
+    conda init bash
+
+WORKDIR /home/jovyan/work

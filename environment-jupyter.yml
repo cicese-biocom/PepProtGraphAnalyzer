@@ -1,0 +1,30 @@
+name: jupyter-env
+
+channels:
+  - nodefaults
+
+dependencies:
+  - python=3.9
+  - numpy<2.0
+  - pip
+  - pip:
+      - pandas
+      - tqdm
+      - PyYAML
+      - networkx
+      - matplotlib
+      - typing
+      - typing_extensions
+      - biopython
+      - pydantic-argparse
+      - pydantic-computed
+      - injector
+      - pyarrow
+      - dask
+      - dask[dataframe]
+      - scipy
+      - python-dotenv
+      - ipywidgets
+      - py3dmol
+      - tabulate
+      - seaborn

@@ -1,0 +1,141 @@
+{
+  "output_settings": [
+    {
+      "key": "log_path",
+      "name": "Log",
+      "modes": ["data_ingestion", "sequence_analyzer", "graph_analyzer", "notebook"],
+      "files": [
+        {
+          "key": "log_file",
+          "name": "Run.log"
+        },
+        {
+          "key": "sequences_with_non_natural_amino_acids_file",
+          "name": "Sequences with Non-Natural Amino Acids.csv"
+        },
+        {
+          "key": "duplicated_sequence_ids_file",
+          "name": "Sequences with Duplicate IDs.csv"
+        },
+        {
+          "key": "duplicated_sequences_file",
+          "name": "Duplicated Sequences.csv"
+        },
+        {
+          "key": "non_pdb_bound_sequences_file",
+          "name": "Sequences Not Linked to PDB.csv"
+        }
+      ]
+    },
+    {
+      "key": "data_ingestion_path",
+      "name": "Data_Ingestion",
+      "modes": ["data_ingestion"],
+      "files": []
+    },
+    {
+      "key": "sequence_analyzer_path",
+      "name": "Sequence_Analysis",
+      "modes": ["sequence_analyzer"],
+      "files": [
+        {
+          "key": "sequence_length",
+          "name": "Sequence Length.csv"
+        },
+        {
+          "key": "sequence_amino_acid_composition",
+          "name": "Sequence Amino Acid Composition.csv"
+        },
+        {
+          "key": "sequence_perplexity",
+          "name": "Sequence Perplexity.csv"
+        },
+        {
+          "key": "sequence_inter_amino_acid_distances_summary",
+          "name": "Sequence Inter-Amino Acid Distances Summary.csv"
+        },
+        {
+          "key": "sequences_with_largest_distance",
+          "name": "Sequences with Largest Distance.csv"
+        }
+      ]
+    },
+    {
+      "key": "graph_analyzer_path",
+      "name": "Graph_Analysis",
+      "modes": ["graph_analyzer"],
+      "files": [
+        {
+          "key": "graph_metrics",
+          "name": "Graph Metrics.csv"
+        },
+        {
+          "key": "graph_metrics_summary",
+          "name": "Graph Metrics Summary"
+        },
+        {
+          "key": "empty_graph_summary",
+          "name": "Empty Graph Summary.csv"
+        },
+        {
+          "key": "graph_similarity",
+          "name": "Similarity Between Graphs.csv"
+        },
+        {
+          "key": "graph_similarity_summary",
+          "name": "Similarity Between Graphs Summary"
+        },
+        {
+          "key": "similarity_with_random_graphs",
+          "name": "Similarity with Random Graphs.csv"
+        },
+        {
+          "key": "similarity_with_random_graphs_summary",
+          "name": "Similarity with Random Graphs Summary"
+        }
+      ]
+    },
+    {
+      "key": "distances_inter_amino_acid_path",
+      "name": "Distances_Inter_Amino_Acid",
+      "modes": ["notebook"],
+      "files": []
+    },
+    {
+      "key": "graph_metrics_path",
+      "name": "Graph_Metrics",
+      "modes": ["notebook"],
+      "files": []
+    },
+    {
+      "key": "graph_similarity_path",
+      "name": "Graph_Similarity",
+      "modes": ["notebook"],
+      "files": []
+    },
+    {
+      "key": "sequence_perplexity_path",
+      "name": "Sequence_Perplexity",
+      "modes": ["notebook"],
+      "files": []
+    },
+    {
+      "key": "sequence_length_path",
+      "name": "Sequence_Length",
+      "modes": ["notebook"],
+      "files": []
+    },
+    {
+      "key": "amino_acid_composition_path",
+      "name": "Amino_Acid_Composition",
+      "modes": ["notebook"],
+      "files": []
+    },
+    {
+      "key": "random_graphs_path",
+      "name": "Random_Graphs",
+      "modes": ["notebook"],
+      "files": []
+    }
+  ]
+}

@@ -3,7 +3,9 @@
 [![Made with Python](https://img.shields.io/badge/Python-=3.11.6-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3116/)
 [![Conda](https://img.shields.io/badge/-conda-44A833?logo=anaconda&logoColor=FFFFFF&color=44A833&labelColor=gray)](https://docs.conda.io/en/latest/)
 
-# Algorithms for Peptides and Proteins Graphs
+# Algorithms for Peptide and Protein Graphs
+
+![Image](https://github.com/user-attachments/assets/42c346b6-035b-4236-91f1-0ca30ec83b63)
 
 ## **Installation**
 Clone the repository using Git:
